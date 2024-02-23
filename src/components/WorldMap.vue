@@ -33,7 +33,6 @@ import { EntityMove } from '@/classes/entity-move';
 import { Entity } from '@/classes/entity';
 import { CellObject } from '@/classes/cell-object';
 import { WSNotification } from '@/classes/notification';
-import { World } from '@/classes/world';
 import { WorldPart } from '@/classes/worldpart';
 
 const cellSize = 32;
@@ -136,6 +135,8 @@ export default defineComponent({
 
                             const worldPart: WorldPart = notification.body as WorldPart;
 
+                            this.center = worldPart.center;
+
                             const cells: WorldCell[] = worldPart.cells;
 
                             this.cells = new Map([...this.cells, ...this.transformCells(cells)]);
@@ -165,6 +166,8 @@ export default defineComponent({
                             this.timer = new Date();
 
                             this.drawCells(this.zero, this.worldWidth - 1, this.worldHeight - 1);
+
+                            console.log(worldPart);
 
                             console.log(`Draw cells time: ${new Date().getTime() - this.timer.getTime()}ms`);
 
@@ -213,6 +216,12 @@ export default defineComponent({
                         case 'ENTITY':
                             const entityMove: EntityMove = notification.body as EntityMove;
 
+                            /*
+                            if (entityMove.type === 'ENTITY_PLAYER') {
+                                // set center
+                            }
+                            */
+
                             this.drawEntity(entityMove);
 
                             break;
@@ -220,16 +229,7 @@ export default defineComponent({
                         case 'CELL_OBJECT':
                             const cellObject: EntityMove = notification.body as EntityMove;
 
-                            // TODO: обновлять объекты а не перезапрашивать
-                            this.timer = new Date();
-
-                            $WebSocketService.send('/game/map-control', {
-                                type: 'MOVE_MAP',
-                                body: {
-                                    direction: 'UP',
-                                    step: 0
-                                }
-                            });
+                            //TODO: draw
 
                             break;
 
@@ -243,13 +243,9 @@ export default defineComponent({
             this.loading = true;
             this.timer = new Date();
             $WebSocketService.send('/game/map-control', {
-                type: 'SET_MAP_POSITION',
+                type: 'SET_SETTINGS',
                 body: {
                     worldId: this.id,
-                    startPoint: {
-                        x: this.zero.x,
-                        y: this.zero.y
-                    },
                     width: this.worldWidth,
                     height: this.worldHeight
                 }
@@ -260,7 +256,6 @@ export default defineComponent({
     },
 
     beforeUnmount(): void {
-        alert('destroy');
         document.removeEventListener('keydown', this.onKeyPressed);
     },
 
@@ -268,23 +263,65 @@ export default defineComponent({
         onKeyPressed(event: KeyboardEvent): void {
             switch (event.code) {
                 case 'ArrowUp':
-                    this.moveMap2(Direction.UP);
+                    this.movePlayer(Direction.UP);
                     break;
                 case 'ArrowDown':
-                    this.moveMap2(Direction.DOWN);
+                    this.movePlayer(Direction.DOWN);
                     break;
                 case 'ArrowLeft':
-                    this.moveMap2(Direction.LEFT);
+                    this.movePlayer(Direction.LEFT);
                     break;
                 case 'ArrowRight':
-                    this.moveMap2(Direction.RIGHT);
+                    this.movePlayer(Direction.RIGHT);
                     break;
                 default:
                     break;
             }
         },
 
+        movePlayer(direction: Direction) {
+            if (this.loading) {
+                console.error('already loading!');
+
+                return;
+            }
+
+            //this.loading = true;
+
+            let dir = '';
+
+            switch (direction) {
+                case Direction.UP:
+                    dir = 'UP';
+                    break;
+
+                case Direction.DOWN:
+                    dir = 'DOWN';
+                    break;
+
+                case Direction.RIGHT:
+                    dir = 'RIGHT';
+                    break;
+
+                case Direction.LEFT:
+                    dir = 'LEFT';
+                    break;
+            }
+
+            console.log(`Move ${dir}, new center is ${JSON.stringify(this.center)}, new zero is ${JSON.stringify(this.zero)}`);
+
+            this.timer = new Date();
+
+            $WebSocketService.send('/game/map-control', {
+                type: 'MOVE_PLAYER',
+                body: {
+                    direction: dir
+                }
+            });
+        },
+
         moveMap2(direction: Direction) {
+            alert('MOVE MAP');
             if (this.loading) {
                 console.error('already loading!');
 

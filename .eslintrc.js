@@ -13,9 +13,9 @@ module.exports = {
 
   parserOptions: {
     ecmaVersion: 2020,
-    parser: "@typescript-eslint/parser",
-    ecmaFeatures : {
-      jsx : false
+    parser: '@typescript-eslint/parser',
+    ecmaFeatures: {
+      jsx: false
     }
   },
 
@@ -39,40 +39,63 @@ module.exports = {
     'comma-dangle': [2, 'never'],
     'array-bracket-newline': 0,
     'array-bracket-spacing': [2, 'never'],
-    'no-multiple-empty-lines': [2, { 'max': 1, 'maxEOF': 0, 'maxBOF': 0 }],
-    'keyword-spacing': [2, { 'before': true, 'after': true }],
+    'no-multiple-empty-lines': [2, {
+      'max': 1,
+      'maxEOF': 0,
+      'maxBOF': 0
+    }],
+    'keyword-spacing': [2, {
+      'before': true,
+      'after': true
+    }],
     'space-infix-ops': 2,
     'space-before-blocks': 2,
-    'space-before-function-paren': [2, { 'anonymous': 'always', 'named': 'never', 'asyncArrow': 'always' }],
+    'space-before-function-paren': [2, {
+      'anonymous': 'always',
+      'named': 'never',
+      'asyncArrow': 'always'
+    }],
     'no-regex-spaces': 0,
     'no-unused-vars': 0,
     'no-mixed-spaces-and-tabs': 0,
     'prefer-const': 2,
     /*
-    'prefer-destructuring': [
-      2,
-      {
-        AssignmentExpression: {
-          array: false,
-          object: false
-        },
-        VariableDeclarator: {
-          array: true,
-          object: true
-        }
-      }, {
-        enforceForRenamedProperties: false
-      }
-    ],
-    */
+'prefer-destructuring': [
+  2,
+  {
+    AssignmentExpression: {
+      array: false,
+      object: false
+    },
+    VariableDeclarator: {
+      array: true,
+      object: true
+    }
+  }, {
+    enforceForRenamedProperties: false
+  }
+],
+*/
     'arrow-parens': [2, 'always'],
     'arrow-spacing': 2,
     'no-var': 2,
     'padding-line-between-statements': [
       2,
-      { blankLine: 'always', next: 'return', prev: '*' },
-      { blankLine: 'always', next: '*', prev: ['const', 'let'] },
-      { blankLine: 'any', next: ['const', 'let'], prev: ['const', 'let'] }
+      {
+        blankLine: 'always',
+        next: 'return',
+        prev: '*'
+      },
+      {
+        blankLine: 'always',
+        next: '*',
+        prev: ['const', 'let']
+      },
+      {
+        blankLine: 'any',
+        next: ['const', 'let'],
+        prev: ['const', 'let']
+      }
     ],
     // Removed rule 'disallow the use of undeclared variables unless mentioned in /*global */ comments' from recommended eslint rules
     'no-undef': 0,
@@ -145,7 +168,11 @@ module.exports = {
     'no-param-reassign': 0,
     'vars-on-top': 0,
     'max-classes-per-file': 0,
-    'max-len': [2, { code: 150, tabWidth: 4, ignoreUrls: true }],
+    'max-len': [2, {
+      code: 150,
+      tabWidth: 4,
+      ignoreUrls: true
+    }],
 
     // Typescript
     // 0 - 'off'

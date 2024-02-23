@@ -41,31 +41,32 @@ export default defineComponent({
     name: 'WorldMap',
 
     props: {
-        id: String
+        id: {
+            type: String,
+            required: true
+        }
     },
 
-    data() {
-        return {
-            loading: false as boolean,
+    data: () => ({
+        loading: false as boolean,
 
-            timer: new Date as Date,
+        timer: new Date as Date,
 
-            app: new PIXI.Application() as PIXI.Application,
-            appLayoutLandscape: new PIXI.Container() as PIXI.Container,
+        app: new PIXI.Application() as PIXI.Application,
+        appLayoutLandscape: new PIXI.Container() as PIXI.Container,
 
-            //world: undefined as World | undefined,
+        //world: undefined as World | undefined,
 
-            hints: [
-                new Point2D(-11, -11),
-                new Point2D(-11, 11)
-            ],
+        hints: [
+            new Point2D(-11, -11),
+            new Point2D(-11, 11)
+        ],
 
-            cells: new Map() as Map<string, WorldCell>,
-            cellObjects: new Map() as Map<string, CellObject>,
-            entities: new Map() as Map<string, Entity>,
-            center: new Point2D(0, 0) as Point2D
-        };
-    },
+        cells: new Map() as Map<string, WorldCell>,
+        cellObjects: new Map() as Map<string, CellObject>,
+        entities: new Map() as Map<string, Entity>,
+        center: new Point2D(0, 0) as Point2D
+    }),
 
     computed: {
         canvas: function (): HTMLCanvasElement {
@@ -151,7 +152,7 @@ export default defineComponent({
                                 if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
                                     || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
 
-                                    const sprite = this.cells.get(key).sprite;
+                                    const sprite: PIXI.Sprite = this.cells.get(key).sprite as PIXI.Sprite; // FIXME: why as?
 
                                     setTimeout(() => {
                                         this.appLayoutLandscape.removeChild(sprite);
@@ -183,7 +184,7 @@ export default defineComponent({
                                 if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
                                     || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
 
-                                    const sprite = this.cellObjects.get(key).sprite;
+                                    const sprite: PIXI.Sprite = this.cellObjects.get(key).sprite as PIXI.Sprite;  // FIXME: why as?
 
                                     setTimeout(() => {
                                         this.appLayoutLandscape.removeChild(sprite);
@@ -227,8 +228,7 @@ export default defineComponent({
                             break;
 
                         case 'CELL_OBJECT':
-                            const cellObject: EntityMove = notification.body as EntityMove;
-
+                            //const cellObject: EntityMove = notification.body as EntityMove;
                             //TODO: draw
 
                             break;
@@ -520,7 +520,7 @@ export default defineComponent({
                 for (let { x } = start; x <= start.x + width; x++) {
                     for (let { y } = start; y <= start.y + height; y++) {
                         const coordinates: Point2D = new Point2D(x, y);
-                        const cell: WorldCell = this.cells.get(JSON.stringify(coordinates));
+                        const cell: WorldCell = this.cells.get(JSON.stringify(coordinates)) as WorldCell; // FIXME: why as?
 
                         if (!cell) {
                             const error = `No cell at coords x:${x}, y:${y}! Zero:${JSON.stringify(start)}, width:${width}, height:${height}`;
@@ -560,7 +560,7 @@ export default defineComponent({
                 for (let { x } = start; x <= start.x + width; x++) {
                     for (let { y } = start; y <= start.y + height; y++) {
                         const coordinates: Point2D = new Point2D(x, y);
-                        const cellObject: CellObject = this.cellObjects.get(JSON.stringify(coordinates));
+                        const cellObject: CellObject = this.cellObjects.get(JSON.stringify(coordinates)) as CellObject;  // FIXME: why as?
 
                         if (!cellObject) {
                             continue;

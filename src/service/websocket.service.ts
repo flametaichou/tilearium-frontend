@@ -9,6 +9,7 @@ class WebSocketService {
     weakWebsockets: typeof SockJS[] = [];
     weakStompClients: Client[] = [];
     stompClient: Client = null;
+    sessionId: string = null;
 
     init(): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -35,6 +36,14 @@ class WebSocketService {
             this.stompClient.connect(
                 headers,
                 (frame) => {
+
+                    // FIXME: looks like a hack
+                    const url = this.stompClient.ws._transport.url;
+                    const parts = url.split('/');
+
+                    this.sessionId = parts[parts.length - 2];
+                    console.log('Your current session is: ' + this.sessionId);
+
                     if (debugMode) {
                         console.log('Connected: ' + frame);
                     }
@@ -58,8 +67,15 @@ class WebSocketService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subscribe(path: string, callbackFunction: (arg: any) => void, weak: boolean) {
+    subscribeTo(path: string, callbackFunction: (arg: any) => void, weak: boolean) {
         this.stompClient.subscribe(path, (val) => {
+            callbackFunction(JSON.parse(val.body));
+        });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    subscribe(callbackFunction: (arg: any) => void, weak: boolean) {
+        this.stompClient.subscribe(`/game/user/${this.sessionId}/queue`, (val) => {
             callbackFunction(JSON.parse(val.body));
         });
     }

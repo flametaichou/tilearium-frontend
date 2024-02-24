@@ -123,7 +123,6 @@ export default defineComponent({
 
         $WebSocketService.init().then(() => {
             $WebSocketService.subscribe(
-                '/game',
                 (notification: WSNotification) => {
                     switch (notification.type) {
                         case 'MAP_PART':

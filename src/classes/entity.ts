@@ -7,10 +7,11 @@ export class Entity implements Point2D, Identified {
         this.id = id;
         this.x = x;
         this.y = y;
+        this.rendered = false;
     }
 
     id: string;
     x: number;
     y: number;
-    sprite: PIXI.Sprite;
+    rendered: boolean;
 }

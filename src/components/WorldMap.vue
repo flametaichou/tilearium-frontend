@@ -1,5 +1,8 @@
 <template>
     <div class="world-map__wrapper">
+        <div>
+            FPS: {{ fps }}
+        </div>
         <canvas
             id="pixi"
             class="world-map"
@@ -36,6 +39,7 @@ import { WSNotification } from '@/classes/notification';
 import { WorldPart } from '@/classes/worldpart';
 
 const cellSize = 32;
+const maxFps = 60;
 
 export default defineComponent({
     name: 'WorldMap',
@@ -49,8 +53,9 @@ export default defineComponent({
 
     data: () => ({
         loading: false as boolean,
-
-        timer: new Date as Date,
+        initialized: false as boolean,
+        stopped: false as boolean,
+        fps: 0 as number,
 
         app: new PIXI.Application() as PIXI.Application,
         appLayoutLandscape: new PIXI.Container() as PIXI.Container,
@@ -61,11 +66,20 @@ export default defineComponent({
             new Point2D(-11, -11),
             new Point2D(-11, 11)
         ],
-
-        cells: new Map() as Map<string, WorldCell>,
-        cellObjects: new Map() as Map<string, CellObject>,
-        entities: new Map() as Map<string, Entity>,
-        center: new Point2D(0, 0) as Point2D
+        
+        center: new Point2D(0, 0) as Point2D,
+        
+        data: {
+            cells: new Map() as Map<string, WorldCell>,
+            cellObjects: new Map() as Map<string, CellObject>,
+            entities: new Map() as Map<string, Entity>
+        },
+        
+        view: {
+            cells: new Map() as Map<string, PIXI.Sprite>,
+            cellObjects: new Map() as Map<string, PIXI.Sprite>,
+            entities: new Map() as Map<string, PIXI.Sprite>
+        }
     }),
 
     computed: {
@@ -119,110 +133,34 @@ export default defineComponent({
 
         this.clearPixi();
 
-        this.loadWorld();
-
         $WebSocketService.init().then(() => {
             $WebSocketService.subscribe(
                 (notification: WSNotification) => {
                     switch (notification.type) {
                         case 'MAP_PART':
-                            // Обрезать лишние
-                            // Вставить все пришедшие
-
-                            console.log(`Answer time: ${new Date().getTime() - this.timer.getTime()}ms`);
-
-                            this.timer = new Date();
-
                             const worldPart: WorldPart = notification.body as WorldPart;
 
+                            // TODO: make it smooth
                             this.center = worldPart.center;
 
                             const cells: WorldCell[] = worldPart.cells;
 
-                            this.cells = new Map([...this.cells, ...this.transformCells(cells)]);
-
-                            console.log(`Prepare cells 1 time: ${new Date().getTime() - this.timer.getTime()}ms`);
-
-                            this.timer = new Date();
-
-                            for (const key of this.cells.keys()) {
-                                const p: Point2D = JSON.parse(key);
-
-                                if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
-                                    || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
-
-                                    const sprite: PIXI.Sprite = this.cells.get(key).sprite as PIXI.Sprite; // FIXME: why as?
-
-                                    setTimeout(() => {
-                                        this.appLayoutLandscape.removeChild(sprite);
-                                    });
-                                    this.cells.delete(key);
-                                }
-                            }
-
-                            // FIXME: the most time here
-                            console.log(`Prepare cells 2 time: ${new Date().getTime() - this.timer.getTime()}ms`);
-
-                            this.timer = new Date();
-
-                            this.drawCells(this.zero, this.worldWidth - 1, this.worldHeight - 1);
-
-                            console.log(worldPart);
-
-                            console.log(`Draw cells time: ${new Date().getTime() - this.timer.getTime()}ms`);
-
-                            this.timer = new Date();
+                            this.data.cells = new Map([...this.data.cells, ...this.transformCells(cells)]);
 
                             const cellObjects: CellObject[] = worldPart.cellObjects;
 
-                            this.cellObjects = new Map([...this.cellObjects, ...this.transformCellObjects(cellObjects)]);
+                            this.data.cellObjects = new Map([...this.data.cellObjects, ...this.transformCellObjects(cellObjects)]);
 
-                            for (const key of this.cellObjects.keys()) {
-                                const p: Point2D = JSON.parse(key);
-
-                                if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
-                                    || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
-
-                                    const sprite: PIXI.Sprite = this.cellObjects.get(key).sprite as PIXI.Sprite;  // FIXME: why as?
-
-                                    setTimeout(() => {
-                                        this.appLayoutLandscape.removeChild(sprite);
-                                    });
-                                    this.cellObjects.delete(key);
-                                }
-                            }
-
-                            console.log(`Prepare objects time: ${new Date().getTime() - this.timer.getTime()}ms`);
-
-                            this.timer = new Date();
-
-                            this.drawObjects(this.zero, this.worldWidth - 1, this.worldHeight - 1);
-
-                            console.log(`Draw objects time: ${new Date().getTime() - this.timer.getTime()}ms`);
-
-                            this.timer = new Date();
-
-                            /*
-                            console.log('size: ' + this.worldWidth * this.worldHeight);
-                            console.log('cells: ' + this.cells.size);
-                            console.log('layout: ' + this.appLayoutLandscape.children.length);
-                             */
-
-                            this.centerPixi();
-                            console.log(`Other time: ${new Date().getTime() - this.timer.getTime()}ms`);
-                            this.loading = false;
                             break;
 
                         case 'ENTITY':
                             const entityMove: EntityMove = notification.body as EntityMove;
 
-                            /*
-                            if (entityMove.type === 'ENTITY_PLAYER') {
-                                // set center
-                            }
-                            */
-
-                            this.drawEntity(entityMove);
+                            // FIXME: sprites can be not removed from pixi
+                            this.data.entities = new Map([
+                                ...this.data.entities,
+                                ...this.transformEntities([new Entity(entityMove.id, entityMove.x, entityMove.y)])
+                            ]);
 
                             break;
 
@@ -239,8 +177,6 @@ export default defineComponent({
                 false
             );
 
-            this.loading = true;
-            this.timer = new Date();
             $WebSocketService.send('/game/map-control', {
                 type: 'SET_SETTINGS',
                 body: {
@@ -249,12 +185,15 @@ export default defineComponent({
                     height: this.worldHeight
                 }
             });
+
+            this.render();
         });
 
         document.addEventListener('keydown', this.onKeyPressed);
     },
 
     beforeUnmount(): void {
+        this.stopped = true;
         document.removeEventListener('keydown', this.onKeyPressed);
     },
 
@@ -279,14 +218,6 @@ export default defineComponent({
         },
 
         movePlayer(direction: Direction) {
-            if (this.loading) {
-                console.error('already loading!');
-
-                return;
-            }
-
-            //this.loading = true;
-
             let dir = '';
 
             switch (direction) {
@@ -309,8 +240,6 @@ export default defineComponent({
 
             console.log(`Move ${dir}, new center is ${JSON.stringify(this.center)}, new zero is ${JSON.stringify(this.zero)}`);
 
-            this.timer = new Date();
-
             $WebSocketService.send('/game/map-control', {
                 type: 'MOVE_PLAYER',
                 body: {
@@ -320,15 +249,6 @@ export default defineComponent({
         },
 
         moveMap2(direction: Direction) {
-            alert('MOVE MAP');
-            if (this.loading) {
-                console.error('already loading!');
-
-                return;
-            }
-
-            this.loading = true;
-
             let dir = '';
 
             switch (direction) {
@@ -355,8 +275,6 @@ export default defineComponent({
 
             console.log(`Move ${dir}, new center is ${JSON.stringify(this.center)}, new zero is ${JSON.stringify(this.zero)}`);
 
-            this.timer = new Date();
-
             $WebSocketService.send('/game/map-control', {
                 type: 'MOVE_MAP',
                 body: {
@@ -364,6 +282,10 @@ export default defineComponent({
                     step: 1
                 }
             });
+        },
+
+        mergeIntoMap() {
+            
         },
 
         // eslint-disable-next-line @typescript-eslint/ban-types
@@ -401,67 +323,38 @@ export default defineComponent({
             return cellsMap;
         },
 
-        loadWorld: function () {
+        transformEntities: function (entities: Entity[]): Map<string, Entity> {
+            const entityMap: Map<string, Entity> = new Map<string, Entity>();
 
-        },
+            for (let entityCounter = 0; entityCounter < entities.length; entityCounter++) {
+                const entity: Entity = entities[entityCounter];
 
-        redwaw() {
-
-        },
-
-        drawEntity(entityMove: EntityMove) {
-            let found = false;
-
-            for (const [entityId, entity] of this.entities) {
-                if (entityId === entityMove.id) {
-                    found = true;
-                    entity.x = entityMove.x;
-                    entity.y = entityMove.y;
-
-                    const textureName = 'entity';
-                    const texture = PIXI.Texture.from(textureName);
-
-                    entity.sprite.x = entity.x * cellSize;
-                    entity.sprite.y = entity.y * cellSize - (texture.height - cellSize);
-                    entity.sprite.zIndex = entity.y + entity.x + 20;
-                }
+                entityMap.set(entity.id, entity);
             }
 
-            if (!found) {
-                console.log('create entity');
-
-                const entity: Entity = new Entity(entityMove.id, entityMove.x, entityMove.y);
-
-                const textureName = 'entity';
-                const texture = PIXI.Texture.from(textureName);
-                const sprite = new PIXI.Sprite(texture);
-
-                sprite.x = entity.x * cellSize;
-                sprite.y = entity.y * cellSize - (texture.height - cellSize);
-                sprite.zIndex = entity.y + entity.x + 20;
-
-                entity.sprite = sprite;
-
-                console.log('Added new entity sprite');
-                this.appLayoutLandscape.addChild(sprite);
-
-                this.entities.set(entity.id, entity);
-            }
-
-            //this.appLayoutLandscape.updateTransform();
+            return entityMap;
         },
 
         clearPixi() {
-            for (const cell of this.cells.values()) {
-                if (cell.sprite) {
-                    cell.sprite = undefined;
-                }
+            for (const key of this.view.cells.keys()) {
+                const sprite: PIXI.Sprite = this.view.cells.get(key) as PIXI.Sprite;
+
+                this.appLayoutLandscape.removeChild(sprite);
+                this.view.cells.delete(key);
             }
 
-            for (const cellObject of this.cellObjects.values()) {
-                if (cellObject.sprite) {
-                    cellObject.sprite = undefined;
-                }
+            for (const key of this.view.cellObjects.keys()) {
+                const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite;
+
+                this.appLayoutLandscape.removeChild(sprite);
+                this.view.cellObjects.delete(key);
+            }
+
+            for (const key of this.view.entities.keys()) {
+                const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
+
+                this.appLayoutLandscape.removeChild(sprite);
+                this.view.entities.delete(key);
             }
 
             this.appLayoutLandscape.removeChildren();
@@ -505,92 +398,6 @@ export default defineComponent({
             this.appLayoutLandscape.pivot.y = this.center.y * cellSize;
         },
 
-        /**
-         * TODO: выгружать ячейки которые не видно
-         * TODO: не рисовать ячейки которые уже нарисованы
-         *
-         * @param start
-         * @param width
-         * @param height
-         * @param clear
-         */
-        drawCells(start: Point2D, width: number, height: number) {
-            if (this.cells) {
-                for (let { x } = start; x <= start.x + width; x++) {
-                    for (let { y } = start; y <= start.y + height; y++) {
-                        const coordinates: Point2D = new Point2D(x, y);
-                        const cell: WorldCell = this.cells.get(JSON.stringify(coordinates)) as WorldCell; // FIXME: why as?
-
-                        if (!cell) {
-                            const error = `No cell at coords x:${x}, y:${y}! Zero:${JSON.stringify(start)}, width:${width}, height:${height}`;
-
-                            console.error(error);
-                            continue;
-                        }
-
-                        if (!cell.sprite) {
-                            // TODO: if cell type changed
-                            const textureName = cell.cellType.toLowerCase();
-                            const texture = PIXI.Texture.from(textureName);
-                            const sprite = new PIXI.Sprite(texture);
-
-                            sprite.x = coordinates.x * cellSize;
-                            sprite.y = coordinates.y * cellSize - (texture.height - cellSize);
-                            sprite.zIndex = coordinates.y + coordinates.x;
-                            sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
-
-                            cell.sprite = sprite;
-
-                            setTimeout(() => {
-                                this.appLayoutLandscape.addChild(sprite);
-                            });
-                        } else {
-                            //console.log('cell already rendered');
-                        }
-                    }
-                }
-
-                //this.appLayoutLandscape.updateTransform();
-            }
-        },
-
-        drawObjects(start: Point2D, width: number, height: number) {
-            if (this.cellObjects) {
-                for (let { x } = start; x <= start.x + width; x++) {
-                    for (let { y } = start; y <= start.y + height; y++) {
-                        const coordinates: Point2D = new Point2D(x, y);
-                        const cellObject: CellObject = this.cellObjects.get(JSON.stringify(coordinates)) as CellObject;  // FIXME: why as?
-
-                        if (!cellObject) {
-                            continue;
-                        }
-
-                        if (!cellObject.sprite) {
-                            // TODO: if cellObject type changed
-                            const textureName = cellObject.cellObjectType.toLowerCase();
-                            const texture = PIXI.Texture.from(textureName);
-                            const sprite = new PIXI.Sprite(texture);
-
-                            sprite.x = coordinates.x * cellSize;
-                            sprite.y = coordinates.y * cellSize - (texture.height - cellSize);
-                            sprite.zIndex = coordinates.y + coordinates.x;
-                            //sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
-
-                            cellObject.sprite = sprite;
-
-                            setTimeout(() => {
-                                this.appLayoutLandscape.addChild(sprite);
-                            });
-                        } else {
-                            //console.log('cell object already rendered');
-                        }
-                    }
-                }
-
-                //this.appLayoutLandscape.updateTransform();
-            }
-        },
-
         getColorForPercentage3(percent: number) {
             const r = Math.floor(0xFF * percent);
             const g = Math.floor(0xFF * percent);
@@ -611,6 +418,172 @@ export default defineComponent({
             }
 
             return height / (minHeight + maxHeight);
+        },
+
+        render() {
+            if (this.stopped) {
+                console.log('Commit stop');
+
+                return;
+            }
+
+            const timer = new Date();
+
+            this.drawAll();
+
+            const frameTime = new Date().getTime() - timer.getTime();
+
+            this.fps = Math.round(1000 / frameTime);
+
+            if (frameTime >= 1000 / maxFps) {
+                console.warn(`Frame time is ${frameTime}ms`);
+                this.render();
+
+            } else {
+                setTimeout(() => {
+                    this.render();
+                }, 1000 / maxFps - frameTime);
+            }
+        },
+
+        drawAll() {
+            // Обрезать лишние
+            // Вставить все пришедшие
+            for (const key of this.data.cells.keys()) {
+                const p: Point2D = JSON.parse(key);
+
+                if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
+                    || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
+
+                    const sprite: PIXI.Sprite = this.view.cells.get(key) as PIXI.Sprite; // FIXME: why as?
+
+                    setTimeout(() => {
+                        this.appLayoutLandscape.removeChild(sprite);
+                    });
+                    this.view.cells.delete(key);
+                    this.data.cells.delete(key);
+
+                } else {
+                    const cell: WorldCell = this.data.cells.get(key) as WorldCell; // FIXME: why as?
+
+                    if (!cell.rendered) {
+                        // TODO: if cell type changed
+                        // TODO: if sprite already exist
+                        const textureName = cell.cellType.toLowerCase();
+                        const texture = PIXI.Texture.from(textureName);
+                        const sprite = new PIXI.Sprite(texture);
+
+                        sprite.x = p.x * cellSize;
+                        sprite.y = p.y * cellSize - (texture.height - cellSize);
+                        sprite.zIndex = p.y + p.x;
+                        sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
+
+                        cell.rendered = true;
+
+                        this.view.cells.set(key, sprite);
+
+                        setTimeout(() => {
+                            this.appLayoutLandscape.addChild(sprite);
+                        });
+                    } else {
+                        //console.log('cell already rendered');
+                    }
+                }
+            }
+
+            for (const key of this.data.cellObjects.keys()) {
+                const p: Point2D = JSON.parse(key);
+
+                if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
+                    || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
+
+                    const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite;  // FIXME: why as?
+
+                    setTimeout(() => {
+                        this.appLayoutLandscape.removeChild(sprite);
+                    });
+                    this.view.cellObjects.delete(key);
+                    this.data.cellObjects.delete(key);
+
+                } else {
+                    const cellObject: CellObject = this.data.cellObjects.get(key) as CellObject;  // FIXME: why as?
+
+                    if (!cellObject) {
+                        continue;
+                    }
+
+                    if (!cellObject.rendered) {
+                        // TODO: if cellObject type changed
+                        // TODO: if sprite already exist
+                        const textureName = cellObject.cellObjectType.toLowerCase();
+                        const texture = PIXI.Texture.from(textureName);
+                        const sprite = new PIXI.Sprite(texture);
+
+                        sprite.x = p.x * cellSize;
+                        sprite.y = p.y * cellSize - (texture.height - cellSize);
+                        sprite.zIndex = p.y + p.x;
+                        //sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
+
+                        cellObject.rendered = true;
+
+                        this.view.cellObjects.set(key, sprite);
+
+                        setTimeout(() => {
+                            this.appLayoutLandscape.addChild(sprite);
+                        });
+                    } else {
+                        //console.log('cell object already rendered');
+                    }
+                }
+            }
+
+            for (const key of this.data.entities.keys()) {
+                const entity: Entity = this.data.entities.get(key) as Entity; // FIXME: why as?
+
+                if ((entity.x < this.zero.x || entity.x > (this.zero.x + this.worldWidth - 1))
+                    || (entity.y < this.zero.y || entity.y > (this.zero.y + this.worldHeight - 1))) {
+
+                    const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;  // FIXME: why as?
+
+                    setTimeout(() => {
+                        this.appLayoutLandscape.removeChild(sprite);
+                    });
+                    this.view.entities.delete(key);
+                    this.data.entities.delete(key);
+
+                } else {
+                    if (!entity) {
+                        continue;
+                    }
+
+                    if (!entity.rendered) {
+                        const textureName = 'entity';
+                        const texture = PIXI.Texture.from(textureName);
+                        let sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
+
+                        if (!sprite) {
+                            sprite = new PIXI.Sprite(texture);
+
+                            this.view.entities.set(key, sprite);
+
+                            setTimeout(() => {
+                                this.appLayoutLandscape.addChild(sprite);
+                            });
+                        }
+
+                        sprite.x = entity.x * cellSize;
+                        sprite.y = entity.y * cellSize - (texture.height - cellSize);
+                        sprite.zIndex = entity.y + entity.x + 20;
+
+                        entity.rendered = true;
+
+                    } else {
+                        //console.log('cell object already rendered');
+                    }
+                }
+            }
+
+            this.centerPixi();
         }
     }
 

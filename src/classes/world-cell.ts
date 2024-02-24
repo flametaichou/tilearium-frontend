@@ -6,12 +6,12 @@ export class WorldCell {
         this.y = y;
         this.height = height;
         this.cellType = 'DIRT';
-        this.sprite = undefined;
+        this.rendered = false;
     }
 
     x: number;
     y: number;
     height: number;
     cellType: string;
-    sprite: PIXI.Sprite;
+    rendered: boolean;
 }

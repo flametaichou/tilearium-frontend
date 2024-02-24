@@ -5,11 +5,11 @@ export class CellObject {
         this.x = x;
         this.y = y;
         this.cellObjectType = 'TREE';
-        this.sprite = undefined;
+        this.rendered = false;
     }
 
     x: number;
     y: number;
     cellObjectType: string;
-    sprite: PIXI.Sprite;
+    rendered: boolean;
 }

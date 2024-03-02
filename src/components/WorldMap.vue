@@ -1,6 +1,6 @@
 <template>
     <div class="world-map__wrapper">
-        <div>
+        <div class="world-map__fps">
             FPS: {{ fps }}
         </div>
         <canvas
@@ -8,6 +8,7 @@
             class="world-map"
         ></canvas>
 
+        <!--
         <div class="world-map__buttons">
             <button @click="moveMap2(0)">
                 Влево
@@ -22,6 +23,7 @@
                 Вверх
             </button>
         </div>
+        -->
     </div>
 </template>
 
@@ -37,6 +39,7 @@ import { Entity } from '@/classes/entity';
 import { CellObject } from '@/classes/cell-object';
 import { WSNotification } from '@/classes/notification';
 import { WorldPart } from '@/classes/worldpart';
+import { IPointData } from 'pixi.js';
 
 const cellSize = 32;
 const maxFps = 60;
@@ -114,6 +117,8 @@ export default defineComponent({
 
         this.appLayoutLandscape = new PIXI.Container();
         this.appLayoutLandscape.sortableChildren = true;
+        this.appLayoutLandscape.x = this.app.screen.width / 2;
+        this.appLayoutLandscape.y = this.app.screen.height / 2;
 
         this.app.stage?.addChild(this.appLayoutLandscape as PIXI.Container);
 
@@ -140,8 +145,12 @@ export default defineComponent({
                         case 'MAP_PART':
                             const worldPart: WorldPart = notification.body as WorldPart;
 
-                            // TODO: make it smooth
                             this.center = worldPart.center;
+
+                            if (!this.initialized) {
+                                this.initialized = true;
+                                this.centerPixi();
+                            }
 
                             const cells: WorldCell[] = worldPart.cells;
 
@@ -150,6 +159,8 @@ export default defineComponent({
                             const cellObjects: CellObject[] = worldPart.cellObjects;
 
                             this.data.cellObjects = new Map([...this.data.cellObjects, ...this.transformCellObjects(cellObjects)]);
+
+                            // 1-2ms here
 
                             break;
 
@@ -201,15 +212,19 @@ export default defineComponent({
         onKeyPressed(event: KeyboardEvent): void {
             switch (event.code) {
                 case 'ArrowUp':
+                case 'KeyW':
                     this.movePlayer(Direction.UP);
                     break;
                 case 'ArrowDown':
+                case 'KeyS':
                     this.movePlayer(Direction.DOWN);
                     break;
                 case 'ArrowLeft':
+                case 'KeyA':
                     this.movePlayer(Direction.LEFT);
                     break;
                 case 'ArrowRight':
+                case 'KeyD':
                     this.movePlayer(Direction.RIGHT);
                     break;
                 default:
@@ -238,7 +253,7 @@ export default defineComponent({
                     break;
             }
 
-            console.log(`Move ${dir}, new center is ${JSON.stringify(this.center)}, new zero is ${JSON.stringify(this.zero)}`);
+            //console.log(`Move ${dir}, new center is ${JSON.stringify(this.center)}, new zero is ${JSON.stringify(this.zero)}`);
 
             $WebSocketService.send('/game/map-control', {
                 type: 'MOVE_PLAYER',
@@ -248,6 +263,7 @@ export default defineComponent({
             });
         },
 
+        /*
         moveMap2(direction: Direction) {
             let dir = '';
 
@@ -283,6 +299,7 @@ export default defineComponent({
                 }
             });
         },
+        */
 
         mergeIntoMap() {
             
@@ -290,7 +307,7 @@ export default defineComponent({
 
         // eslint-disable-next-line @typescript-eslint/ban-types
         transformCells: function (cells: WorldCell[]): Map<string, WorldCell> {
-            const time: Date = new Date();
+            //const time: Date = new Date();
 
             const cellsMap: Map<string, WorldCell> = new Map<string, WorldCell>();
 
@@ -301,13 +318,13 @@ export default defineComponent({
                 cellsMap.set(JSON.stringify(point), cell);
             }
 
-            console.log('Преобразование: ' + (new Date().getTime() - time.getTime()) + 'мс');
+            //console.log('Преобразование: ' + (new Date().getTime() - time.getTime()) + 'мс');
 
             return cellsMap;
         },
 
         transformCellObjects: function (cells: CellObject[]): Map<string, CellObject> {
-            const time: Date = new Date();
+            //const time: Date = new Date();
 
             const cellsMap: Map<string, CellObject> = new Map<string, CellObject>();
 
@@ -318,7 +335,7 @@ export default defineComponent({
                 cellsMap.set(JSON.stringify(point), cell);
             }
 
-            console.log('Преобразование 2: ' + (new Date().getTime() - time.getTime()) + 'мс');
+            //console.log('Преобразование 2: ' + (new Date().getTime() - time.getTime()) + 'мс');
 
             return cellsMap;
         },
@@ -390,12 +407,55 @@ export default defineComponent({
         centerPixi() {
             // TODO: тут центрирование, разобраться
             // Move container to the center
-            this.appLayoutLandscape.x = this.app.screen.width / 2;
-            this.appLayoutLandscape.y = this.app.screen.height / 2;
+            //this.appLayoutLandscape.x = this.app.screen.width / 2;
+            //this.appLayoutLandscape.y = this.app.screen.height / 2;
 
             // Center bunny sprite in local container coordinates
             this.appLayoutLandscape.pivot.x = this.center.x * cellSize;
             this.appLayoutLandscape.pivot.y = this.center.y * cellSize;
+        },
+
+        /**
+         * Make one frame of movement to point
+         *
+         * @param sprite    object to move
+         * @param point     point to move the object
+         */
+        moveSmooth(sprite: IPointData, point: Point2D) {
+            // FIXME: if another move started or coords changed?
+            let stepX = Math.abs(point.x - sprite.x) / 6;
+
+            if (Math.abs(sprite.x - point.x) < stepX) {
+                stepX = Math.abs(sprite.x - point.x);
+            }
+
+            if (sprite.x < point.x) {
+                sprite.x += stepX;
+            } else if (sprite.x > point.x) {
+                sprite.x -= stepX;
+            }
+
+            let stepY = Math.abs(point.y - sprite.y) / 6;
+
+            if (Math.abs(sprite.y - point.y) < stepY) {
+                stepY = Math.abs(sprite.y - point.y);
+            }
+
+            if (sprite.y < point.y) {
+                sprite.y += stepY;
+            } else if (sprite.y > point.y) {
+                sprite.y -= stepY;
+            }
+
+            if (sprite.x === point.x && sprite.y === point.y) {
+                return;
+
+            }/* else {
+                //this.appLayoutLandscape.updateTransform();
+                setTimeout(() => {
+                    this.moveSmooth(sprite, point);
+                }, 1);
+            }*/
         },
 
         getColorForPercentage3(percent: number) {
@@ -420,6 +480,7 @@ export default defineComponent({
             return height / (minHeight + maxHeight);
         },
 
+        // check https://github.com/kittykatattack/smoothie
         render() {
             if (this.stopped) {
                 console.log('Commit stop');
@@ -433,14 +494,19 @@ export default defineComponent({
 
             const frameTime = new Date().getTime() - timer.getTime();
 
-            this.fps = Math.round(1000 / frameTime);
-
             if (frameTime >= 1000 / maxFps) {
                 console.warn(`Frame time is ${frameTime}ms`);
+                this.fps = Math.round(1000 / frameTime);
                 this.render();
 
             } else {
                 setTimeout(() => {
+                    /*
+                    const frameTime2 = new Date().getTime() - timer.getTime();
+                    this.fps = Math.round(1000 / frameTime2);
+                    */
+                    this.fps = maxFps;
+
                     this.render();
                 }, 1000 / maxFps - frameTime);
             }
@@ -449,19 +515,35 @@ export default defineComponent({
         drawAll() {
             // Обрезать лишние
             // Вставить все пришедшие
+
+            /*
+            console.log(`cells: ${this.data.cells.size} (${this.view.cells.size})`);
+            console.log(`cellObjects: ${this.data.cellObjects.size} (${this.view.cellObjects.size})`);
+            console.log(`entities: ${this.data.entities.size} (${this.view.entities.size})`);
+            */
+
+            /*
+            const spritesToRemove = [];
+            const spritesToAdd = [];
+            */
+
             for (const key of this.data.cells.keys()) {
                 const p: Point2D = JSON.parse(key);
 
                 if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
                     || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
 
-                    const sprite: PIXI.Sprite = this.view.cells.get(key) as PIXI.Sprite; // FIXME: why as?
-
-                    setTimeout(() => {
-                        this.appLayoutLandscape.removeChild(sprite);
-                    });
-                    this.view.cells.delete(key);
                     this.data.cells.delete(key);
+
+                    if (this.view.cells.get(key)) {
+                        const sprite: PIXI.Sprite = this.view.cells.get(key) as PIXI.Sprite; // FIXME: why as?
+
+                        //this.appLayoutLandscape.removeChild(sprite);
+                        //spritesToRemove.push(sprite);
+                        sprite.visible = false;
+
+                        this.view.cells.delete(key);
+                    }
 
                 } else {
                     const cell: WorldCell = this.data.cells.get(key) as WorldCell; // FIXME: why as?
@@ -474,7 +556,7 @@ export default defineComponent({
                         const sprite = new PIXI.Sprite(texture);
 
                         sprite.x = p.x * cellSize;
-                        sprite.y = p.y * cellSize - (texture.height - cellSize);
+                        sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
                         sprite.zIndex = p.y + p.x;
                         sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
 
@@ -482,9 +564,8 @@ export default defineComponent({
 
                         this.view.cells.set(key, sprite);
 
-                        setTimeout(() => {
-                            this.appLayoutLandscape.addChild(sprite);
-                        });
+                        this.appLayoutLandscape.addChild(sprite);
+                        //spritesToAdd.push(sprite);
                     } else {
                         //console.log('cell already rendered');
                     }
@@ -497,13 +578,17 @@ export default defineComponent({
                 if ((p.x < this.zero.x || p.x > (this.zero.x + this.worldWidth - 1))
                     || (p.y < this.zero.y || p.y > (this.zero.y + this.worldHeight - 1))) {
 
-                    const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite;  // FIXME: why as?
-
-                    setTimeout(() => {
-                        this.appLayoutLandscape.removeChild(sprite);
-                    });
-                    this.view.cellObjects.delete(key);
                     this.data.cellObjects.delete(key);
+
+                    if (this.view.cellObjects.get(key)) {
+                        const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite;  // FIXME: why as?
+
+                        //this.appLayoutLandscape.removeChild(sprite);
+                        //spritesToRemove.push(sprite);
+                        sprite.visible = false;
+
+                        this.view.cellObjects.delete(key);
+                    }
 
                 } else {
                     const cellObject: CellObject = this.data.cellObjects.get(key) as CellObject;  // FIXME: why as?
@@ -520,7 +605,7 @@ export default defineComponent({
                         const sprite = new PIXI.Sprite(texture);
 
                         sprite.x = p.x * cellSize;
-                        sprite.y = p.y * cellSize - (texture.height - cellSize);
+                        sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
                         sprite.zIndex = p.y + p.x;
                         //sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
 
@@ -528,9 +613,8 @@ export default defineComponent({
 
                         this.view.cellObjects.set(key, sprite);
 
-                        setTimeout(() => {
-                            this.appLayoutLandscape.addChild(sprite);
-                        });
+                        this.appLayoutLandscape.addChild(sprite);
+                        //spritesToAdd.push(sprite);
                     } else {
                         //console.log('cell object already rendered');
                     }
@@ -543,13 +627,17 @@ export default defineComponent({
                 if ((entity.x < this.zero.x || entity.x > (this.zero.x + this.worldWidth - 1))
                     || (entity.y < this.zero.y || entity.y > (this.zero.y + this.worldHeight - 1))) {
 
-                    const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;  // FIXME: why as?
-
-                    setTimeout(() => {
-                        this.appLayoutLandscape.removeChild(sprite);
-                    });
-                    this.view.entities.delete(key);
                     this.data.entities.delete(key);
+
+                    if (this.view.entities.get(key)) {
+                        const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;  // FIXME: why as?
+
+                        //this.appLayoutLandscape.removeChild(sprite);
+                        //spritesToRemove.push(sprite);
+                        sprite.visible = false;
+
+                        this.view.entities.delete(key);
+                    }
 
                 } else {
                     if (!entity) {
@@ -566,24 +654,67 @@ export default defineComponent({
 
                             this.view.entities.set(key, sprite);
 
-                            setTimeout(() => {
-                                this.appLayoutLandscape.addChild(sprite);
-                            });
+                            this.appLayoutLandscape.addChild(sprite);
+                            //spritesToAdd.push(sprite);
                         }
 
-                        sprite.x = entity.x * cellSize;
-                        sprite.y = entity.y * cellSize - (texture.height - cellSize);
+                        //sprite.x = entity.x * cellSize;
+                        //sprite.y = entity.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
                         sprite.zIndex = entity.y + entity.x + 20;
+
+                        // TODO: move stepped only if it is not creation
+                        this.moveSmooth(sprite, new Point2D(
+                            entity.x * cellSize,
+                            entity.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0)
+                        ));
 
                         entity.rendered = true;
 
                     } else {
+                        // FIXME: it's smoother but code is not good enough
+                        const textureName = 'entity';
+                        const texture = PIXI.Texture.from(textureName);
+                        const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
+
+                        this.moveSmooth(sprite, new Point2D(
+                            entity.x * cellSize,
+                            entity.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0)
+                        ));
+
                         //console.log('cell object already rendered');
                     }
                 }
             }
 
-            this.centerPixi();
+            /*
+            if (spritesToRemove && spritesToRemove.length) {
+                // FIXME: 100ms
+                //this.appLayoutLandscape.removeChild(...spritesToRemove);
+
+                // FIXME: not deleting it, but if faster
+                // 1-2ms
+                for (const sprite of spritesToRemove) {
+                    if (sprite) {
+                        sprite.visible = false;
+                    } else {
+                        console.error('Attempt to delete sprite that does not exist');
+                    }
+                }
+            }
+
+            if (spritesToAdd && spritesToAdd.length) {
+                // 1-2ms
+                this.appLayoutLandscape.addChild(...spritesToAdd);
+            }
+            */
+
+            const targetX = Math.round(this.center.x * cellSize);
+            const targetY = Math.round(this.center.y * cellSize);
+
+            this.moveSmooth(this.appLayoutLandscape.pivot, new Point2D(
+                targetX,
+                targetY
+            ));
         }
     }
 
@@ -591,6 +722,7 @@ export default defineComponent({
 </script>
 
 <style scoped lang='scss'>
+    /*
     .cell {
         &__wrapper {
             position: relative;
@@ -604,15 +736,31 @@ export default defineComponent({
         width: 5px;
         background-color: gray;
     }
+    */
 
     .world-map {
-        //width: 100%;
+        width: 100%;
         height: 100%;
-        border: 1px solid gray;
+        //border: 1px solid gray;
 
         &__wrapper {
-            //width: 100%;
+            width: 100%;
             height: 100%;
+
+            //background-color: black;
+            background: radial-gradient(circle at bottom, #00212f 0, black 100%);
+
+            //background: rgb(0,0,48);
+            //background: radial-gradient(circle, rgba(0,0,48,1) 0%, rgba(0,50,108,1) 100%);
+        }
+
+        &__fps {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid gray;
+            padding: 5px;
         }
     }
 </style>

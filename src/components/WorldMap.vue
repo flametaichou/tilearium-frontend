@@ -40,9 +40,12 @@ import { CellObject } from '@/classes/cell-object';
 import { WSNotification } from '@/classes/notification';
 import { WorldPart } from '@/classes/worldpart';
 import { IPointData } from 'pixi.js';
+import { removeFromArray } from '@/utils/array-utils';
+import { ActionKey } from '@/classes/action-key';
 
 const cellSize = 32;
 const maxFps = 60;
+const debugMode = false;
 
 export default defineComponent({
     name: 'WorldMap',
@@ -55,13 +58,32 @@ export default defineComponent({
     },
 
     data: () => ({
+        initializing: false as boolean,
         loading: false as boolean,
         initialized: false as boolean,
         stopped: false as boolean,
         fps: 0 as number,
 
+        keysPressed: [] as string[],
+        keysMapping: {
+            'ArrowUp': ActionKey.MOVE_UP,
+            'KeyW': ActionKey.MOVE_UP,
+
+            'ArrowDown': ActionKey.MOVE_DOWN,
+            'KeyS': ActionKey.MOVE_DOWN,
+
+            'ArrowLeft': ActionKey.MOVE_LEFT,
+            'KeyA': ActionKey.MOVE_LEFT,
+
+            'ArrowRight': ActionKey.MOVE_RIGHT,
+            'KeyD': ActionKey.MOVE_RIGHT,
+        } as { [key: string]: ActionKey },
+
         app: new PIXI.Application() as PIXI.Application,
         appLayoutLandscape: new PIXI.Container() as PIXI.Container,
+
+        textures: new Map() as Map<string, string>,
+        textureRegistry: new Map() as Map<string, PIXI.Texture>,
 
         //world: undefined as World | undefined,
 
@@ -107,6 +129,8 @@ export default defineComponent({
     },
 
     mounted() {
+        this.initializing = true;
+
         this.app = new PIXI.Application({
             width: this.canvas.clientWidth,
             height: this.canvas.clientHeight,
@@ -122,19 +146,26 @@ export default defineComponent({
 
         this.app.stage?.addChild(this.appLayoutLandscape as PIXI.Container);
 
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_grass.png'), 'grass');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_dirt.png'), 'dirt');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_sand.png'), 'sand');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_water.png'), 'water');
+        // Init textures
+        this.textures.set('grass', '/cell_grass.png');
+        this.textures.set('dirt', '/cell_dirt.png');
+        this.textures.set('sand', '/cell_sand.png');
+        this.textures.set('water', '/cell_water.png');
 
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_tree.png'), 'tree');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_storage.png'), 'storage');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_house.png'), 'house');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_wall.png'), 'wall');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_road.png'), 'road');
-        PIXI.Texture.addToCache(PIXI.Texture.from('/cell_tree.png'), 'tree');
+        this.textures.set('tree', '/cell_tree.png');
+        this.textures.set('storage', '/cell_storage.png');
+        this.textures.set('house', '/cell_house.png');
+        this.textures.set('wall', '/cell_wall.png');
+        this.textures.set('road', '/cell_road.png');
 
-        PIXI.Texture.addToCache(PIXI.Texture.from('/entity.png'), 'entity');
+        this.textures.set('entity', '/entity.png');
+        this.textures.set('empty', '/empty_texture.png');
+
+        for (const textureName of this.textures.keys()) {
+            const texture: PIXI.Texture = PIXI.Texture.from(this.textures.get(textureName));
+            PIXI.Texture.addToCache(texture, textureName);
+            this.textureRegistry.set(textureName, texture);
+        }
 
         this.clearPixi();
 
@@ -201,6 +232,7 @@ export default defineComponent({
         });
 
         document.addEventListener('keydown', this.onKeyPressed);
+        document.addEventListener('keyup', this.onKeyReleased);
     },
 
     beforeUnmount(): void {
@@ -210,6 +242,19 @@ export default defineComponent({
 
     methods: {
         onKeyPressed(event: KeyboardEvent): void {
+            const action: ActionKey = this.keysMapping[event.code];
+
+            if (action) {
+                if (this.keysPressed.includes(event.code)) {
+                    return;
+                }
+
+                this.keysPressed.push(event.code);
+
+                this.sendKeyPressed(action, true);
+            }
+
+            /*
             switch (event.code) {
                 case 'ArrowUp':
                 case 'KeyW':
@@ -230,8 +275,36 @@ export default defineComponent({
                 default:
                     break;
             }
+            */
         },
 
+        onKeyReleased(event: KeyboardEvent): void {
+            const action: ActionKey = this.keysMapping[event.code];
+
+            if (action) {
+                if (!this.keysPressed.includes(event.code)) {
+                    console.error('Key was not pressed but was released: ' + event.code);
+                    return;
+                }
+
+                removeFromArray(this.keysPressed, event.code);
+
+                this.sendKeyPressed(this.keysMapping[event.code], false);
+            }
+        },
+
+        sendKeyPressed(key: ActionKey, state: boolean) {
+            console.log(`[Input] (${new Date().toLocaleTimeString()}) Key: ${key} state: ${state}`);
+            $WebSocketService.send('/game/map-control', {
+                type: 'KEY_STATE',
+                body: {
+                    action: key,
+                    state: state
+                }
+            });
+        },
+
+        /*
         movePlayer(direction: Direction) {
             let dir = '';
 
@@ -263,7 +336,6 @@ export default defineComponent({
             });
         },
 
-        /*
         moveMap2(direction: Direction) {
             let dir = '';
 
@@ -376,29 +448,44 @@ export default defineComponent({
 
             this.appLayoutLandscape.removeChildren();
 
-            const zeroText = new PIXI.Text(
-                '0:0',
-                { fontSize: '24px' }
-            );
-
-            zeroText.x = 0;
-            zeroText.y = 0;
-            zeroText.zIndex = 9999;
-            console.log('Added new text sprite');
-            this.appLayoutLandscape.addChild(zeroText);
-
-            for (const hint of this.hints) {
-
-                const hintText = new PIXI.Text(
-                    JSON.stringify(hint),
-                    { fontSize: '12px' }
+            if (debugMode) {
+                const zeroText = new PIXI.Text(
+                    '0:0',
+                    { fontSize: '24px' }
                 );
 
-                hintText.x = hint.x * cellSize;
-                hintText.y = hint.y * cellSize;
-                hintText.zIndex = 9999;
-                console.log('Added new hint text sprite');
-                this.appLayoutLandscape.addChild(hintText);
+                zeroText.x = 0;
+                zeroText.y = 0;
+                zeroText.zIndex = 9999;
+                console.log('Added new text sprite');
+                this.appLayoutLandscape.addChild(zeroText);
+
+                const zeroLineX = new PIXI.Graphics();
+                zeroLineX.lineStyle(2, 0xff0000, 1);
+                zeroLineX.moveTo(-10 * cellSize, 0);
+                zeroLineX.lineTo(5 * cellSize, 0);
+                zeroLineX.zIndex = 9999;
+                this.appLayoutLandscape.addChild(zeroLineX);
+
+                const zeroLineY = new PIXI.Graphics();
+                zeroLineY.lineStyle(2, 0xff0000, 1);
+                zeroLineY.moveTo(0, -10 * cellSize);
+                zeroLineY.lineTo(0, 5 * cellSize);
+                zeroLineY.zIndex = 9999;
+                this.appLayoutLandscape.addChild(zeroLineY);
+
+                for (const hint of this.hints) {
+                    const hintText = new PIXI.Text(
+                        JSON.stringify(hint),
+                        { fontSize: '12px' }
+                    );
+
+                    hintText.x = hint.x * cellSize;
+                    hintText.y = hint.y * cellSize;
+                    hintText.zIndex = 9999;
+                    console.log('Added new hint text sprite');
+                    this.appLayoutLandscape.addChild(hintText);
+                }
             }
 
             //this.appLayoutLandscape.updateTransform();
@@ -480,6 +567,15 @@ export default defineComponent({
             return height / (minHeight + maxHeight);
         },
 
+        getTexture(textureName: string): PIXI.Texture {
+            if (this.textureRegistry.get(textureName)) {
+                // TODO: why as?
+                return this.textureRegistry.get(textureName) as PIXI.Texture ;
+            }
+
+            return this.textureRegistry.get('empty') as PIXI.Texture ;
+        },
+
         // check https://github.com/kittykatattack/smoothie
         render() {
             if (this.stopped) {
@@ -496,7 +592,17 @@ export default defineComponent({
 
             if (frameTime >= 1000 / maxFps) {
                 console.warn(`Frame time is ${frameTime}ms`);
-                this.fps = Math.round(1000 / frameTime);
+
+                //this.fps = Math.round(1000 / frameTime);
+                const newFps = Math.round(1000 / frameTime);
+                if (this.fps < newFps) {
+                    this.fps++;
+                } else if (this.fps > newFps) {
+                    this.fps = newFps;
+                }
+
+                //console.log('Sprites count: ' + this.appLayoutLandscape.children.length);
+
                 this.render();
 
             } else {
@@ -505,7 +611,9 @@ export default defineComponent({
                     const frameTime2 = new Date().getTime() - timer.getTime();
                     this.fps = Math.round(1000 / frameTime2);
                     */
-                    this.fps = maxFps;
+                    if (this.fps < maxFps) {
+                        this.fps++;
+                    }
 
                     this.render();
                 }, 1000 / maxFps - frameTime);
@@ -552,12 +660,13 @@ export default defineComponent({
                         // TODO: if cell type changed
                         // TODO: if sprite already exist
                         const textureName = cell.cellType.toLowerCase();
-                        const texture = PIXI.Texture.from(textureName);
+                        const texture = this.getTexture(textureName);
                         const sprite = new PIXI.Sprite(texture);
 
                         sprite.x = p.x * cellSize;
                         sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
-                        sprite.zIndex = p.y + p.x;
+                        // z-index = bottom edge of the sprite
+                        sprite.zIndex = p.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
                         sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
 
                         cell.rendered = true;
@@ -565,6 +674,29 @@ export default defineComponent({
                         this.view.cells.set(key, sprite);
 
                         this.appLayoutLandscape.addChild(sprite);
+
+                        if (debugMode) {
+                            /*
+                            const coordsText = new PIXI.Text(
+                                `x:${cell.x.toFixed(2)}\ny:${cell.y.toFixed(2)}`,
+                                { fontSize: '9px' }
+                            );
+                            sprite.addChild(coordsText);
+                            */
+
+                            const zIndexText = new PIXI.Text(
+                                `z:${sprite.zIndex}`,
+                                { fontSize: '9px' }
+                            );
+                            sprite.addChild(zIndexText);
+
+                            const rect = new PIXI.Graphics();
+                            //rect.beginFill(0xFFFF00);
+                            rect.lineStyle(1, 0x000000);
+                            rect.drawRect(0, 0, cellSize, cellSize);
+                            sprite.addChild(rect);
+                        }
+
                         //spritesToAdd.push(sprite);
                     } else {
                         //console.log('cell already rendered');
@@ -601,12 +733,13 @@ export default defineComponent({
                         // TODO: if cellObject type changed
                         // TODO: if sprite already exist
                         const textureName = cellObject.cellObjectType.toLowerCase();
-                        const texture = PIXI.Texture.from(textureName);
+                        const texture = this.getTexture(textureName);
                         const sprite = new PIXI.Sprite(texture);
 
                         sprite.x = p.x * cellSize;
                         sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
-                        sprite.zIndex = p.y + p.x;
+                        // z-index = bottom edge of the sprite
+                        sprite.zIndex = p.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
                         //sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
 
                         cellObject.rendered = true;
@@ -614,6 +747,29 @@ export default defineComponent({
                         this.view.cellObjects.set(key, sprite);
 
                         this.appLayoutLandscape.addChild(sprite);
+
+                        if (debugMode) {
+                            /*
+                            const coordsText = new PIXI.Text(
+                                `x:${cellObject.x.toFixed(2)}\ny:${cellObject.y.toFixed(2)}`,
+                                { fontSize: '9px' }
+                            );
+                            sprite.addChild(coordsText);
+                            */
+
+                            const zIndexText = new PIXI.Text(
+                                `x:${sprite.zIndex}`,
+                                { fontSize: '9px', fill: 'red' }
+                            );
+                            sprite.addChild(zIndexText);
+
+                            const rect = new PIXI.Graphics();
+                            //rect.beginFill(0xFFFF00);
+                            rect.lineStyle(2, 0xFF0000);
+                            rect.drawRect(0, 0, cellSize, cellSize);
+                            sprite.addChild(rect);
+                        }
+
                         //spritesToAdd.push(sprite);
                     } else {
                         //console.log('cell object already rendered');
@@ -646,7 +802,7 @@ export default defineComponent({
 
                     if (!entity.rendered) {
                         const textureName = 'entity';
-                        const texture = PIXI.Texture.from(textureName);
+                        const texture = this.getTexture(textureName);
                         let sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
 
                         if (!sprite) {
@@ -656,30 +812,54 @@ export default defineComponent({
 
                             this.appLayoutLandscape.addChild(sprite);
                             //spritesToAdd.push(sprite);
+
+                            if (debugMode) {
+                                const coordsText = new PIXI.Text(
+                                    `${entity.x.toFixed(2)}:${entity.y.toFixed(2)}`,
+                                    { fontSize: '24px' }
+                                );
+                                sprite.addChild(coordsText);
+                            }
+                        }
+
+                        if (debugMode) {
+                            (sprite.getChildAt(0) as PIXI.Text).text = `${entity.x.toFixed(2)}:${entity.y.toFixed(2)}`;
                         }
 
                         //sprite.x = entity.x * cellSize;
                         //sprite.y = entity.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
-                        sprite.zIndex = entity.y + entity.x + 20;
+                        // TODO: why + 20
+                        //sprite.zIndex = entity.y * 100;
+
+                        // Entities has different coordinates. They need to be placed at exact coordinates (on the middle of the block)
+                        // TODO: how to get exact coordinates?
+                        // depends on square part (--, +-, ++, -+)
 
                         // TODO: move stepped only if it is not creation
                         this.moveSmooth(sprite, new Point2D(
-                            entity.x * cellSize,
-                            entity.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0)
+                            entity.x * cellSize - (texture.width / 2),
+                            entity.y * cellSize - texture.height
                         ));
+
+                        // z-index = bottom edge of the sprite
+                        sprite.zIndex = entity.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
 
                         entity.rendered = true;
 
                     } else {
                         // FIXME: it's smoother but code is not good enough
                         const textureName = 'entity';
-                        const texture = PIXI.Texture.from(textureName);
+                        const texture = this.getTexture(textureName);
                         const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
 
+                        // Entities has different coordinates. They need to be placed at exact coordinates (on the middle of the block)
                         this.moveSmooth(sprite, new Point2D(
-                            entity.x * cellSize,
-                            entity.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0)
+                            entity.x * cellSize - (texture.width / 2),
+                            entity.y * cellSize - texture.height
                         ));
+
+                        // z-index = bottom edge of the sprite
+                        sprite.zIndex = entity.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
 
                         //console.log('cell object already rendered');
                     }

@@ -2,7 +2,7 @@ import { ActionKey } from '@/classes/action-key';
 import * as PIXI from 'pixi.js';
 import { Point2D } from '@/classes/point2d';
 import { WorldCell } from '@/classes/world-cell';
-import { CellObject } from '@/classes/cell-object';
+import { CellObject, ObjectTree } from '@/classes/cell-object';
 import { Entity } from '@/classes/entity';
 import { Container } from 'pixi.js';
 import { Assets } from 'pixi.js';
@@ -176,6 +176,26 @@ export class WorldSimGame {
         this.textures.set('water', '/cell_water.png');
 
         this.textures.set('tree', '/cell_tree.png');
+        this.textures.set('tree_cactus', '/cell_tree_cactus.png');
+        this.textures.set('tree_maple', '/cell_tree_maple.png');
+        this.textures.set('tree_oak', '/cell_tree_oak.png');
+        this.textures.set('tree_palm', '/cell_tree_palm.png');
+        this.textures.set('tree_pine', '/cell_tree_pine.png');
+        this.textures.set('tree_poplar', '/cell_tree_poplar.png');
+        this.textures.set('tree_spruce', '/cell_tree_spruce.png');
+        this.textures.set('tree_willow', '/cell_tree_willow.png');
+
+        this.textures.set('dead_tree', '/cell_dead_tree.png');
+        this.textures.set('dead_tree_tree', '/cell_dead_tree_tree.png');
+        this.textures.set('dead_tree_log', '/cell_dead_tree_log.png');
+        this.textures.set('dead_tree_stump', '/cell_dead_tree_stump.png');
+
+        this.textures.set('bush', '/cell_bush.png');
+
+        this.textures.set('bush', '/cell_water_plant_water_lily.png');
+        this.textures.set('bush', '/cell_water_plant_cattail.png');
+
+        this.textures.set('cliff', '/cell_cliff.png');
         this.textures.set('storage', '/cell_storage.png');
         this.textures.set('house', '/cell_house.png');
         this.textures.set('wall', '/cell_wall.png');
@@ -672,6 +692,19 @@ export class WorldSimGame {
         return this.textureRegistry.get('empty') as PIXI.Texture ;
     }
 
+    getTextureForObject(cellObject: CellObject): PIXI.Texture {
+        let textureName = cellObject.cellObjectType.toLowerCase();
+
+        if (cellObject.cellObjectType === 'TREE') {
+            const type = (cellObject as ObjectTree).meta?.type;
+            if (type) {
+                textureName += `_${type.toLowerCase()}`;
+            }
+        }
+
+        return this.getTexture(textureName);
+    }
+
     getChunkForPoint(point: Point2D): PIXI.Container {
         const key = this.getKey(new Point2D(Math.floor(point.x / chunkSize), Math.floor(point.y / chunkSize)));
 
@@ -734,136 +767,10 @@ export class WorldSimGame {
     }
 
     drawAll() {
-        // Обрезать лишние
-        // Вставить все пришедшие
-
         /*
         console.log(`cells: ${this.data.cells.size} (${this.view.cells.size})`);
         console.log(`cellObjects: ${this.data.cellObjects.size} (${this.view.cellObjects.size})`);
         console.log(`entities: ${this.data.entities.size} (${this.view.entities.size})`);
-        */
-
-        /*
-        for (const key of this.data.cells.keys()) {
-            const cell: WorldCell = this.data.cells.get(key) as WorldCell;
-
-            if (!cell.rendered) {
-                // render
-            }
-        }
-        */
-
-        /*
-        for (let x = 0; x <= this.worldWidth; x++) {
-            for (let y = 0; y <= this.worldHeight; y++) {
-                const p: Point2D = new Point2D(x + this.zero.x, y + this.zero.y);
-                const key = this.getKey(p);
-
-                const cell: WorldCell = this.data.cells.get(key) as WorldCell; // FIXME: why as?
-
-                if (cell && !cell.rendered) {
-                    // TODO: if cell type changed
-                    // TODO: if sprite already exist
-                    const textureName = cell.cellType.toLowerCase();
-                    const texture = this.getTexture(textureName);
-                    const sprite = new PIXI.Sprite(texture);
-
-                    sprite.x = p.x * cellSize;
-                    sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
-                    // z-index = bottom edge of the sprite
-                    sprite.zIndex = p.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
-                    sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
-
-                    cell.rendered = true;
-
-                    //this.view.cells.set(key, sprite);
-
-                    // FIXME coords inside of chunk must be 0:0 - 15:15
-                    const chunk: PIXI.Container = this.getChunkForPoint(p);
-                    chunk.addChild(sprite);
-
-                    if (debugMode) {
-                        const coordsText = new PIXI.Text(
-                            `x:${cell.x.toFixed(2)}\ny:${cell.y.toFixed(2)}`,
-                            { fontSize: 9 }
-                        );
-                        sprite.addChild(coordsText);
-
-                        const rect = new PIXI.Graphics();
-                        //rect.beginFill(0xFFFF00);
-                        rect.lineStyle(1, 0x000000);
-                        rect.drawRect(0, 0, cellSize, cellSize);
-                        sprite.addChild(rect);
-                    }
-                }
-
-                const cellObject: CellObject = this.data.cellObjects.get(key) as CellObject;  // FIXME: why as?
-
-                if (!cellObject) {
-                    continue;
-                }
-
-                if (!cellObject.rendered) {
-                    // TODO: if cellObject type changed
-                    // TODO: if sprite already exist
-                    const textureName = cellObject.cellObjectType.toLowerCase();
-                    const texture = this.getTexture(textureName);
-                    // TODO: use pool
-                    const sprite = new PIXI.Sprite(texture);
-
-                    sprite.x = p.x * cellSize;
-                    sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
-                    // z-index = bottom edge of the sprite
-                    sprite.zIndex = p.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
-                    //sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
-
-                    cellObject.rendered = true;
-
-                    //this.view.cellObjects.set(key, sprite);
-
-                    const chunk: PIXI.Container = this.getChunkForPoint(p);
-                    chunk.addChild(sprite);
-
-                    if (debugMode) {
-                        const coordsText = new PIXI.Text(
-                            `x:${cellObject.x.toFixed(2)}\ny:${cellObject.y.toFixed(2)}`,
-                            { fontSize: 9 }
-                        );
-                        sprite.addChild(coordsText);
-
-                        const rect = new PIXI.Graphics();
-                        //rect.beginFill(0xFFFF00);
-                        rect.lineStyle(2, 0xFF0000);
-                        rect.drawRect(0, 0, cellSize, cellSize);
-                        sprite.addChild(rect);
-                    }
-                }
-            }
-        }
-
-        for (const key of this.chunks.keys()) {
-            const chunkCoords: Point2D = this.parseKey(key);
-
-            if ((chunkCoords.x < Math.floor(this.zero.x / chunkSize) && chunkCoords.y < Math.floor(this.zero.y / chunkSize))
-                || (chunkCoords.x > Math.floor((this.zero.x + this.worldWidth) / chunkSize) && chunkCoords.y > Math.floor((this.zero.y + this.worldHeight) / chunkSize))) {
-
-                // TODO: remove cells from data
-                for (let x = 0; x <= chunkSize; x++) {
-                    for (let y = 0; y <= chunkSize; y++) {
-                        const p: Point2D = new Point2D((chunkCoords.x * chunkSize) + x, (chunkCoords.y * chunkSize) + y);
-                        const key = this.getKey(p);
-                        this.data.cells.delete(key);
-                        this.data.cellObjects.delete(key);
-                    }
-                }
-
-                const chunk: PIXI.Container = this.chunks.get(key) as PIXI.Container; // FIXME: why as?
-                this.container.removeChild(chunk);
-                this.chunks.delete(key);
-
-                console.log('Chunk removed ' + key);
-            }
-        }
         */
 
         for (const key of this.data.cells.keys()) {
@@ -884,7 +791,8 @@ export class WorldSimGame {
                 sprite.x = p.x * cellSize;
                 sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
                 // z-index = bottom edge of the sprite
-                sprite.zIndex = p.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
+                //sprite.zIndex = p.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
+                sprite.zIndex = p.y * cellSize;
                 sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
 
                 cell.rendered = true;
@@ -931,15 +839,21 @@ export class WorldSimGame {
             if (!rendered) {
                 // TODO: if cellObject type changed
                 // TODO: if sprite already exist
-                const textureName = cellObject.cellObjectType.toLowerCase();
-                const texture = this.getTexture(textureName);
+                const texture = this.getTextureForObject(cellObject);
                 // TODO: use pool
                 const sprite = new PIXI.Sprite(texture);
 
-                sprite.x = p.x * cellSize;
-                sprite.y = p.y * cellSize - (texture.height > cellSize ? (texture.height - cellSize) : 0);
+                if (cellObject.cellObjectType === 'TREE') {
+                    const size = (cellObject as ObjectTree).meta?.size || 1;
+                    sprite.width = sprite.width * size;
+                    sprite.height = sprite.height * size;
+                }
+
+                sprite.x = p.x * cellSize - (sprite.width > cellSize ? (sprite.width - cellSize) / 2 : 0);
+                sprite.y = p.y * cellSize - (sprite.height > cellSize ? (sprite.height - cellSize) : 0);
                 // z-index = bottom edge of the sprite
-                sprite.zIndex = p.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
+                //sprite.zIndex = p.y * cellSize + (sprite.height > cellSize ? (sprite.height - cellSize) : 0);
+                sprite.zIndex = p.y * cellSize;
                 //sprite.tint = this.getColorForPercentage3(this.getPercentageForHeight(cell.height));
 
                 cellObject.rendered = true;
@@ -1020,7 +934,8 @@ export class WorldSimGame {
                 ));
 
                 // z-index = bottom edge of the sprite
-                sprite.zIndex = entity.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
+                //sprite.zIndex = entity.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
+                sprite.zIndex = entity.y * cellSize;
 
                 entity.rendered = true;
 

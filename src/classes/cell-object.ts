@@ -12,4 +12,12 @@ export class CellObject {
     y: number;
     cellObjectType: string;
     rendered: boolean;
+    meta: object;
+}
+
+export class ObjectTree {
+    meta: {
+        size: number,
+        type: string
+    };
 }

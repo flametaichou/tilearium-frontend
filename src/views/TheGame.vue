@@ -1,6 +1,6 @@
 <template>
     <div class="game">
-        <world-map :id="'6df1bbd8-45b0-4b01-95a4-0ba47efbd103'"></world-map>
+        <world-map :id="'18e8a29d-bc74-41f5-84c9-c194bda29417'"></world-map>
     </div>
 </template>
 

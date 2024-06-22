@@ -170,39 +170,53 @@ export class WorldSimGame {
         this.app.stage.addChild(this.container as PIXI.Container);
 
         // Init textures
-        this.textures.set('grass', '/cell_grass.png');
-        this.textures.set('dirt', '/cell_dirt.png');
-        this.textures.set('sand', '/cell_sand.png');
-        this.textures.set('water', '/cell_water.png');
+        const spritesPath = '/sprites/';
+        this.textures.set('grass', `${spritesPath}cell/grass.png`);
+        this.textures.set('dirt', `${spritesPath}cell/dirt.png`);
+        this.textures.set('sand', `${spritesPath}cell/sand.png`);
+        this.textures.set('water', `${spritesPath}cell/water.png`);
+        this.textures.set('ice', `${spritesPath}cell/ice.png`);
+        this.textures.set('snow', `${spritesPath}cell/snow.png`);
+        this.textures.set('leaves', `${spritesPath}cell/leaves.png`);
 
-        this.textures.set('tree', '/cell_tree.png');
-        this.textures.set('tree_cactus', '/cell_tree_cactus.png');
-        this.textures.set('tree_maple', '/cell_tree_maple.png');
-        this.textures.set('tree_oak', '/cell_tree_oak.png');
-        this.textures.set('tree_palm', '/cell_tree_palm.png');
-        this.textures.set('tree_pine', '/cell_tree_pine.png');
-        this.textures.set('tree_poplar', '/cell_tree_poplar.png');
-        this.textures.set('tree_spruce', '/cell_tree_spruce.png');
-        this.textures.set('tree_willow', '/cell_tree_willow.png');
+        this.textures.set('tree', `${spritesPath}object/tree.png`);
+        this.textures.set('tree_cactus', `${spritesPath}object/tree_cactus.png`);
+        this.textures.set('tree_maple', `${spritesPath}object/tree_maple.png`);
+        this.textures.set('tree_oak', `${spritesPath}object/tree_oak.png`);
+        this.textures.set('tree_palm', `${spritesPath}object/tree_palm.png`);
+        this.textures.set('tree_pine', `${spritesPath}object/tree_pine.png`);
+        this.textures.set('tree_poplar', `${spritesPath}object/tree_poplar.png`);
+        this.textures.set('tree_spruce', `${spritesPath}object/tree_spruce.png`);
+        this.textures.set('tree_willow', `${spritesPath}object/tree_willow.png`);
 
-        this.textures.set('dead_tree', '/cell_dead_tree.png');
-        this.textures.set('dead_tree_tree', '/cell_dead_tree_tree.png');
-        this.textures.set('dead_tree_log', '/cell_dead_tree_log.png');
-        this.textures.set('dead_tree_stump', '/cell_dead_tree_stump.png');
+        this.textures.set('dead_tree', `${spritesPath}object/dead_tree.png`);
+        this.textures.set('dead_tree_tree', `${spritesPath}object/dead_tree_tree.png`);
+        this.textures.set('dead_tree_log', `${spritesPath}object/dead_tree_log.png`);
+        this.textures.set('dead_tree_stump', `${spritesPath}object/dead_tree_stump.png`);
 
-        this.textures.set('bush', '/cell_bush.png');
+        this.textures.set('bush', `${spritesPath}object/bush.png`);
 
-        this.textures.set('bush', '/cell_water_plant_water_lily.png');
-        this.textures.set('bush', '/cell_water_plant_cattail.png');
+        this.textures.set('grass_tall_grass', `${spritesPath}object/grass_tall_grass.png`);
 
-        this.textures.set('cliff', '/cell_cliff.png');
-        this.textures.set('storage', '/cell_storage.png');
-        this.textures.set('house', '/cell_house.png');
-        this.textures.set('wall', '/cell_wall.png');
-        this.textures.set('road', '/cell_road.png');
+        this.textures.set('flower_daisy', `${spritesPath}object/flower_daisy.png`);
 
-        this.textures.set('entity', '/entity.png');
-        this.textures.set('empty', '/empty_texture.png');
+        this.textures.set('mushroom_brown', `${spritesPath}object/mushroom_brown.png`);
+        this.textures.set('mushroom_red', `${spritesPath}object/mushroom_red.png`);
+
+        this.textures.set('bush', `${spritesPath}object/bush.png`);
+
+        this.textures.set('water_plant_water_lily', `${spritesPath}object/water_plant_water_lily.png`);
+        this.textures.set('water_plant_cattail', `${spritesPath}object/water_plant_cattail.png`);
+
+        this.textures.set('cliff', `${spritesPath}object/cliff.png`);
+        this.textures.set('rock', `${spritesPath}object/rock.png`);
+        this.textures.set('storage', `${spritesPath}object/storage.png`);
+        this.textures.set('house', `${spritesPath}object/house.png`);
+        this.textures.set('wall', `${spritesPath}object/wall.png`);
+        this.textures.set('road', `${spritesPath}object/road.png`);
+
+        this.textures.set('entity', `${spritesPath}entity/entity.png`);
+        this.textures.set('empty', `${spritesPath}empty_texture.png`);
 
         for (const textureName of this.textures.keys()) {
             //PIXI.Assets.load(this.textures.get(textureName));
@@ -689,13 +703,14 @@ export class WorldSimGame {
             return this.textureRegistry.get(textureName) as PIXI.Texture ;
         }
 
+        console.warn('No texture found for: ' + textureName);
         return this.textureRegistry.get('empty') as PIXI.Texture ;
     }
 
     getTextureForObject(cellObject: CellObject): PIXI.Texture {
         let textureName = cellObject.cellObjectType.toLowerCase();
 
-        if (cellObject.cellObjectType === 'TREE') {
+        if (['TREE', 'FLOWER', 'DEAD_TREE', 'GRASS', 'MUSHROOM', 'WATER_PLANT'].includes(cellObject.cellObjectType)) {
             const type = (cellObject as ObjectTree).meta?.type;
             if (type) {
                 textureName += `_${type.toLowerCase()}`;

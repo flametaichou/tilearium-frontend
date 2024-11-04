@@ -73,11 +73,12 @@ const router = createRouter({
 //router.beforeEach(vuexOidcCreateRouterMiddleware(store, 'oidcStore'));
 router.beforeEach((to, from, next) => {
     const { authorize } = to.meta;
-    const currentUser = useStore().state.code;
+    const store = useStore();
+    const currentUser = store.state.account;
 
     if (authorize) {
         if (!currentUser) {
-            //return next({ path: '/login' });
+            return next({ path: '/login' });
         }
     }
 
@@ -107,7 +108,7 @@ router.beforeEach((to, from, next) => {
     }
     */
 
-    next();
+    return next();
 });
 
 export default router;

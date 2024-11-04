@@ -1,51 +1,108 @@
 <template>
-    |
-    <button @click="logIn()">Login</button>
+    <div class="login">
+        <div class="login__bg"></div>
+
+        <div class="login__form">
+            <div class="login__logo">
+                <img src="@/assets/logo.png">
+            </div>
+
+            <div class="login__description">
+                <strong>WorldSim</strong> - is a game where you need to find something in a simulated world
+            </div>
+                
+            <div class="login__actions">
+                <button class="secondary large" @click="logIn()">
+                    Log in with Google
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
+<script setup lang="ts">
+import { inject, onMounted } from 'vue';
+import { UserManager } from 'oidc-client-ts';
+import { useStore } from 'vuex';
+import { useRouter } from 'vue-router';
 
-<script lang="ts">
-    import { defineComponent } from 'vue';
-    import { UserManager } from 'oidc-client-ts';
-    import { useStore } from 'vuex';
+const userManager: UserManager = inject('userManager');
+const router = useRouter();
+const store = useStore();
 
-    export default defineComponent({
-        name: 'TheLogin',
+onMounted(() => {
+    const user = store.state.account;
 
-        data: () => ({
-            settings: {
-                authority: 'https://accounts.google.com',
-                client_id: process.env.VUE_APP_CLIENT_ID,
-                redirect_uri: window.location.origin + '/auth',
-                popup_redirect_uri: window.location.origin + '/auth',
-                silent_redirect_uri: window.location.origin + '/silent-renew',
-                post_logout_redirect_uri: window.location.origin + '/auth',
-                response_type: 'code', // 'token id_token'
-                scope: 'openid profile email',
-                automaticSilentRenew: true,
-            },
-            userManager: null as UserManager
-        }),
+    if (user) {
+        router.push('/');
+    }
 
-        mounted(): void {
-            // https://github.com/authts/sample-angular-oidc-client-ts/blob/main/src/app/core/services/auth.service.ts
-            this.userManager = new UserManager(this.settings);
-            this.userManager.signinSilentCallback().catch(error => {
-                console.error(error);
-            });
-        },
+    //userManager.startSilentRenew();    
 
-        methods: {
-            logIn(): void {
-                this.userManager.signinRedirect().then((user) => {
-                    alert(JSON.stringify(user));
-                    useStore().dispatch('authorize', user);
-                });
-            }
-        }
+    /*
+    userManager.signinSilentCallback()
+        .then(() => {
+            router.push('/');
+            alert('Successfully logged id');
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+        */
+});
+
+function logIn(): void {
+    userManager.signinRedirect().then(() => {
     });
+}
+
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+@keyframes moveIt {
+    0% {
+        background-position-x: 0;
+    }
+    100% {
+        background-position-x: 100%; 
+    }
+}
+
+.login {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--black);
+
+    &__bg {
+        z-index: 0;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        background: url('@/assets/img/background.png') 100%;
+        background-repeat: repeat-x;
+        background-size: cover;
+        animation: moveIt 10s linear infinite;
+        filter: blur(10px) brightness(0.8);
+        
+    }
+
+    &__form {
+        z-index: 1;
+        color: var(--white);
+        text-shadow: 1px 1px 2px var(--black);
+    }
+
+    &__description {
+        margin-top: 16px;
+    }
+
+    &__actions {
+        margin-top: 16px;
+    }
+}
 
 </style>

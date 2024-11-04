@@ -5,28 +5,40 @@
         <router-link to="/game">Game</router-link>
         |
         <router-link to="/about">About</router-link>
+        |
+        <a @click="logOut()" href="#">Log out</a>
     </div>
     <router-view/>
 </template>
 
 <script lang="ts">
-    import { defineComponent } from 'vue';
+import { UserManager } from 'oidc-client-ts';
+import { defineComponent, inject } from 'vue';
+import { Store, useStore } from 'vuex';
 
-    export default defineComponent({
-        name: 'TheMain',
+export default defineComponent({
+    name: 'TheMain',
 
-        data: () => ({
+    data: () => ({
+        userManager: undefined as UserManager,
+        store: undefined as Store<object>
+    }),
 
-        }),
+    mounted(): void {
+        this.userManager = inject('userManager');
+        this.store = useStore(); 
+    },
 
-        mounted(): void {
-
-        },
-
-        methods: {
-
+    methods: {
+        logOut(): void {
+            /*
+            this.userManager.signoutRedirect().then(() => {
+            });
+            */
+            this.store.dispatch('authorize', undefined);
         }
-    });
+    }
+});
 </script>
 
 <style scoped lang="scss">

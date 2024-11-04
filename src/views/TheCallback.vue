@@ -1,30 +1,39 @@
 <template>
-
-    <h1>Auth success</h1>
+    <h1>Auth in progress...</h1>
 </template>
 
-
 <script lang="ts">
-    import { defineComponent } from 'vue';
+import { UserManager } from 'oidc-client-ts';
+import { defineComponent, inject } from 'vue';
+import { useStore } from 'vuex';
 
-    export default defineComponent({
-        name: 'TheCallback',
+export default defineComponent({
+    name: 'TheCallback',
 
-        data: () => ({
-        }),
+    data: () => ({
+    }),
 
-        created(): void {
-            const params = this.$route.query;
-            alert(JSON.stringify(params));
+    created(): void {
+        //const params = this.$route.query;
+        //alert(JSON.stringify(params));
 
-            //signinCallback()
-            //this.$router.push(redirectPath);
-        },
+        const userManager: UserManager = inject('userManager');
+        const store = useStore();
 
-        methods: {
+        userManager.signinRedirectCallback()
+            .then((user) => {
+                store.dispatch('authorize', user);
+                this.$router.push('/');
+            })
+            .catch((e) => {
+                alert(e);
+            });
+    },
 
-        }
-    });
+    methods: {
+
+    }
+});
 </script>
 
 <style scoped>

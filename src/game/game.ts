@@ -20,6 +20,8 @@ const debugMode = false;
 // Chunks can be useful to work with smaller arrays (faster)
 const chunkSize = 16;
 
+const spritesPath = '/sprites/';
+
 export class WorldSimGame {
     id: string;
     canvas: HTMLCanvasElement;
@@ -36,6 +38,11 @@ export class WorldSimGame {
     app:  PIXI.Application;
     // TODO: rename to stage
     container:  PIXI.Container;
+    ui:  PIXI.Container;
+    uiTimer: PIXI.Text;
+    uiInventory: PIXI.Container;
+    uiQuest: PIXI.Container;
+
     chunks: Map<string, PIXI.Container>;
 
     textures:  Map<string, string>;
@@ -48,6 +55,12 @@ export class WorldSimGame {
     center: Point2D;
 
     data: {
+        cells: Map<string, WorldCell>,
+        cellObjects: Map<string, CellObject>,
+        entities: Map<string, Entity>
+    };
+
+    viewData: {
         cells: Map<string, WorldCell>,
         cellObjects: Map<string, CellObject>,
         entities: Map<string, Entity>
@@ -117,6 +130,12 @@ export class WorldSimGame {
             entities: new Map() as Map<string, Entity>
         };
 
+        this.viewData = {
+            cells: new Map() as Map<string, WorldCell>,
+            cellObjects: new Map() as Map<string, CellObject>,
+            entities: new Map() as Map<string, Entity>
+        };
+
         this.view = {
             cells: new Map() as Map<string, PIXI.Sprite>,
             cellObjects: new Map() as Map<string, PIXI.Sprite>,
@@ -169,54 +188,73 @@ export class WorldSimGame {
 
         this.app.stage.addChild(this.container as PIXI.Container);
 
+        this.ui = new Container();
+
+        this.uiTimer = new PIXI.Text(
+            '20:00',
+            { fontSize: 32 }
+        );
+
+        this.uiTimer.x = 0;
+        this.uiTimer.y = 0;
+        this.uiTimer.zIndex = 9999;
+        this.ui.addChild(this.uiTimer);
+
+        this.uiInventory = new PIXI.Container();
+        this.ui.addChild(this.uiInventory);
+
+        this.uiQuest = new PIXI.Container();
+        this.ui.addChild(this.uiQuest);
+
+        this.app.stage.addChild(this.ui as PIXI.Container);
+
         // Init textures
-        const spritesPath = '/sprites/';
-        this.textures.set('grass', `${spritesPath}cell/grass.png`);
-        this.textures.set('dirt', `${spritesPath}cell/dirt.png`);
-        this.textures.set('sand', `${spritesPath}cell/sand.png`);
-        this.textures.set('water', `${spritesPath}cell/water.png`);
-        this.textures.set('ice', `${spritesPath}cell/ice.png`);
-        this.textures.set('snow', `${spritesPath}cell/snow.png`);
-        this.textures.set('leaves', `${spritesPath}cell/leaves.png`);
+        this.loadTexture('grass', 'cell');
+        this.loadTexture('dirt', 'cell');
+        this.loadTexture('sand', 'cell');
+        this.loadTexture('water', 'cell');
+        this.loadTexture('ice', 'cell');
+        this.loadTexture('snow', 'cell');
+        this.loadTexture('leaves', 'cell');
 
-        this.textures.set('tree', `${spritesPath}object/tree.png`);
-        this.textures.set('tree_cactus', `${spritesPath}object/tree_cactus.png`);
-        this.textures.set('tree_maple', `${spritesPath}object/tree_maple.png`);
-        this.textures.set('tree_oak', `${spritesPath}object/tree_oak.png`);
-        this.textures.set('tree_palm', `${spritesPath}object/tree_palm.png`);
-        this.textures.set('tree_pine', `${spritesPath}object/tree_pine.png`);
-        this.textures.set('tree_poplar', `${spritesPath}object/tree_poplar.png`);
-        this.textures.set('tree_spruce', `${spritesPath}object/tree_spruce.png`);
-        this.textures.set('tree_willow', `${spritesPath}object/tree_willow.png`);
+        this.loadTexture('tree', 'object');
+        this.loadTexture('tree_cactus', 'object');
+        this.loadTexture('tree_maple', 'object');
+        this.loadTexture('tree_oak', 'object');
+        this.loadTexture('tree_palm', 'object');
+        this.loadTexture('tree_pine', 'object');
+        this.loadTexture('tree_poplar', 'object');
+        this.loadTexture('tree_spruce', 'object');
+        this.loadTexture('tree_willow', 'object');
 
-        this.textures.set('dead_tree', `${spritesPath}object/dead_tree.png`);
-        this.textures.set('dead_tree_tree', `${spritesPath}object/dead_tree_tree.png`);
-        this.textures.set('dead_tree_log', `${spritesPath}object/dead_tree_log.png`);
-        this.textures.set('dead_tree_stump', `${spritesPath}object/dead_tree_stump.png`);
+        this.loadTexture('dead_tree', 'object');
+        this.loadTexture('dead_tree_tree', 'object');
+        this.loadTexture('dead_tree_log', 'object');
+        this.loadTexture('dead_tree_stump', 'object');
 
-        this.textures.set('bush', `${spritesPath}object/bush.png`);
+        this.loadTexture('bush', 'object');
 
-        this.textures.set('grass_tall_grass', `${spritesPath}object/grass_tall_grass.png`);
+        this.loadTexture('grass_tall_grass', 'object');
 
-        this.textures.set('flower_daisy', `${spritesPath}object/flower_daisy.png`);
+        this.loadTexture('flower_daisy', 'object');
 
-        this.textures.set('mushroom_brown', `${spritesPath}object/mushroom_brown.png`);
-        this.textures.set('mushroom_red', `${spritesPath}object/mushroom_red.png`);
+        this.loadTexture('mushroom_brown', 'object');
+        this.loadTexture('mushroom_red', 'object');
 
-        this.textures.set('bush', `${spritesPath}object/bush.png`);
+        this.loadTexture('bush', 'object');
 
-        this.textures.set('water_plant_water_lily', `${spritesPath}object/water_plant_water_lily.png`);
-        this.textures.set('water_plant_cattail', `${spritesPath}object/water_plant_cattail.png`);
+        this.loadTexture('water_plant_water_lily', 'object');
+        this.loadTexture('water_plant_cattail', 'object');
 
-        this.textures.set('cliff', `${spritesPath}object/cliff.png`);
-        this.textures.set('rock', `${spritesPath}object/rock.png`);
-        this.textures.set('storage', `${spritesPath}object/storage.png`);
-        this.textures.set('house', `${spritesPath}object/house.png`);
-        this.textures.set('wall', `${spritesPath}object/wall.png`);
-        this.textures.set('road', `${spritesPath}object/road.png`);
+        this.loadTexture('cliff', 'object');
+        this.loadTexture('rock', 'object');
+        this.loadTexture('storage', 'object');
+        this.loadTexture('house', 'object');
+        this.loadTexture('wall', 'object');
+        this.loadTexture('road', 'object', true);
 
-        this.textures.set('entity', `${spritesPath}entity/entity.png`);
-        this.textures.set('empty', `${spritesPath}empty_texture.png`);
+        this.loadTexture('entity', 'entity');
+        this.loadTexture('empty');
 
         for (const textureName of this.textures.keys()) {
             //PIXI.Assets.load(this.textures.get(textureName));
@@ -225,10 +263,19 @@ export class WorldSimGame {
             //var tile = PIXI.Sprite.fromFrame(filename);
             //var tile = PIXI.Sprite.fromImage(filename);
 
-            await Assets.load(this.textures.get(textureName)).then((result) => {
-                //const texture: PIXI.Texture = PIXI.Texture.from(this.textures.get(textureName), true);
-                this.textureRegistry.set(textureName, result);
-            });
+            try {
+                await Assets.load(this.textures.get(textureName)).then((result) => {
+                    //const texture: PIXI.Texture = PIXI.Texture.from(this.textures.get(textureName), true);
+                    this.textureRegistry.set(textureName, result);
+                });
+            
+            } catch (e) {
+                console.error('Error on loading texture: ' + textureName);
+
+                await Assets.load(this.textures.get('empty')).then((result) => {
+                    this.textureRegistry.set(textureName, result);
+                });
+            }
         }
 
         this.clearPixi();
@@ -251,12 +298,14 @@ export class WorldSimGame {
                             const cells: WorldCell[] = worldPart.cells;
 
                             this.data.cells = new Map([...this.data.cells, ...this.transformCells(cells)]);
+                            this.viewData.cells = new Map([...this.data.cells]);
 
                             const cellObjects: CellObject[] = worldPart.cellObjects;
 
                             this.data.cellObjects = new Map([...this.data.cellObjects, ...this.transformCellObjects(cellObjects)]);
+                            this.viewData.cellObjects = new Map([...this.data.cellObjects]);
 
-                            console.log(`-------------------------------------------`);
+                            console.log('-------------------------------------------');
                             console.log(`Cells size: ${cells.length}`);
                             console.log(`Objects size: ${cellObjects.length}`);
 
@@ -280,7 +329,7 @@ export class WorldSimGame {
 
                             console.log(`Keys pressed count: ${this.keysPressed.length}`);
 
-                            console.log(`-------------------------------------------`);
+                            console.log('-------------------------------------------');
 
                             // 1-2ms here
 
@@ -294,6 +343,7 @@ export class WorldSimGame {
                                 ...this.data.entities,
                                 ...this.transformEntities([new Entity(entityMove.id, entityMove.x, entityMove.y)])
                             ]);
+                            this.viewData.entities = new Map([...this.data.entities]);
 
                             break;
 
@@ -325,6 +375,7 @@ export class WorldSimGame {
             this.fps = 0;
             this.app.ticker.add((delta) => {
                 const newFps = Math.round(this.app.ticker.FPS);
+
                 if (this.fps < newFps) {
                     this.fps++;
                 } else if (this.fps > newFps) {
@@ -334,6 +385,7 @@ export class WorldSimGame {
 
             this.app.ticker.add((delta) => {
                 this.drawAll();
+                this.redrawAll();
                 this.clearAll();
             }, {}, -100);
 
@@ -402,6 +454,7 @@ export class WorldSimGame {
         if (action) {
             if (!this.keysPressed.includes(event.code)) {
                 console.error('Key was not pressed but was released: ' + event.code);
+
                 return;
             }
 
@@ -504,6 +557,7 @@ export class WorldSimGame {
     parseKey(key: string): Point2D {
         //return JSON.parse(key);
         const parts = key.split(':');
+
         return new Point2D(Number(parts[0]), Number(parts[1]));
     }
 
@@ -591,6 +645,7 @@ export class WorldSimGame {
             this.container.addChild(zeroText);
 
             const zeroLineX = new PIXI.Graphics();
+
             zeroLineX.lineStyle(2, 0xff0000, 1);
             zeroLineX.moveTo(-10 * cellSize, 0);
             zeroLineX.lineTo(5 * cellSize, 0);
@@ -598,6 +653,7 @@ export class WorldSimGame {
             this.container.addChild(zeroLineX);
 
             const zeroLineY = new PIXI.Graphics();
+
             zeroLineY.lineStyle(2, 0xff0000, 1);
             zeroLineY.moveTo(0, -10 * cellSize);
             zeroLineY.lineTo(0, 5 * cellSize);
@@ -697,6 +753,24 @@ export class WorldSimGame {
         return height / (minHeight + maxHeight);
     }
 
+    loadTexture(textureName: string, type?: string, tiling?: boolean): void {
+        if (!type) {
+            type = '';
+        }
+        type = type + '/';
+
+        if (tiling) {
+            const arr: number[] = [4, 7, 13, 14, 15, 21, 22, 23, 28, 29, 30, 31];
+
+            for (const code of arr) {
+                this.textures.set(`${textureName}_${code}`, `${spritesPath}${type}${textureName}_${code}.png`);
+                this.textures.set(`${textureName}_alt_${code}`, `${spritesPath}${type}${textureName}_alt_${code}.png`);
+            }
+        } else {
+            this.textures.set(`${textureName}`, `${spritesPath}${type}${textureName}.png`);
+        }
+    }
+
     getTexture(textureName: string): PIXI.Texture {
         if (this.textureRegistry.get(textureName)) {
             // TODO: why as?
@@ -704,6 +778,7 @@ export class WorldSimGame {
         }
 
         console.warn('No texture found for: ' + textureName);
+
         return this.textureRegistry.get('empty') as PIXI.Texture ;
     }
 
@@ -712,12 +787,123 @@ export class WorldSimGame {
 
         if (['TREE', 'FLOWER', 'DEAD_TREE', 'GRASS', 'MUSHROOM', 'WATER_PLANT'].includes(cellObject.cellObjectType)) {
             const type = (cellObject as ObjectTree).meta?.type;
+
             if (type) {
                 textureName += `_${type.toLowerCase()}`;
             }
         }
 
+        const tiling = this.isTiling(cellObject);
+
+        if (tiling) {
+            const tile = this.getTileForObject(cellObject);
+
+            return this.getTexture(`${textureName}_${tile}`);
+        }
+
         return this.getTexture(textureName);
+    }
+
+    isTiling(cellObject: CellObject): boolean {
+        return ['ROAD'].includes(cellObject.cellObjectType);
+    }
+
+    getTileForObject(cellObject: CellObject): string {
+
+        //const cell1: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y - 1)));
+        const cell2: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x, cellObject.y - 1)));
+        //const cell3: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y - 1)));
+        const cell4: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y)));
+        const cell6: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y)));
+        //const cell7: CellObject = this.data.cellObjects.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y + 1)));
+        const cell8: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x, cellObject.y + 1)));
+        //const cell9: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y + 1)));
+
+        //const byte1 = cell1.cellObjectType === cellObject.cellObjectType;
+        const byte2 = cell2?.cellObjectType === cellObject.cellObjectType;
+        //const byte3 = cell3.cellObjectType === cellObject.cellObjectType;
+        const byte4 = cell4?.cellObjectType === cellObject.cellObjectType;
+        const byte5 = true;
+        const byte6 = cell6?.cellObjectType === cellObject.cellObjectType;
+        //const byte7 = cell7.cellObjectType === cellObject.cellObjectType;
+        const byte8 = cell8?.cellObjectType === cellObject.cellObjectType;
+        //const byte9 = cell9.cellObjectType === cellObject.cellObjectType;
+
+        // TODO: удаляются из data после отрисовки
+
+        const binaryString = (
+            (byte2 ? '1' : '0') 
+            + (byte4 ? '1' : '0') 
+            + (byte5 ? '1' : '0') 
+            + (byte6 ? '1' : '0') 
+            + (byte8 ? '1' : '0')
+        );
+
+        console.log(binaryString);
+
+        let code = parseInt(binaryString, 2);
+
+        console.log(code);
+
+        if (code === 20 || code === 5) {
+            code = 21;
+        }
+
+        if (code === 12 || code === 6) {
+            code = 14;
+        }
+
+        //let inverted = false;
+
+        /*
+        if (cellObject.cellObjectType === 'CLIFF') {
+            let x = 0;
+            let y = 0;
+
+            if (code === 7 || code === 22) {
+                x = -1;
+
+            } else if (code === 13 || code === 28) {
+                x = 1;    
+            }
+
+            if (code === 7 || code === 13) {
+                y = -1;
+
+            } else if (code === 22 || code === 28) {
+                y = 1;    
+            }
+
+            const c1: WorldCell = this.viewData.cells.get(this.getKey(new Point2D(cellObject.x + x, cellObject.y - y)));
+            const c2: WorldCell = this.viewData.cells.get(this.getKey(new Point2D(cellObject.x, cellObject.y)));
+
+            if (c1?.height > c2?.height) {
+                inverted = true;
+            }
+        }
+        */
+
+        /*
+        let topToBottom: boolean = true;
+        let leftToRight: boolean = true;
+
+        if (cellObject.cellObjectType === 'CLIFF') {
+            topToBottom = (this.data.cells.get(this.getKey(new Point2D(cellObject.x, cellObject.y - 1)))?.height || 0) >
+                (this.data.cells.get(this.getKey(new Point2D(cellObject.x, cellObject.y + 1)))?.height || 0);
+
+            leftToRight = (this.data.cells.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y)))?.height || 0) >
+                (this.data.cells.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y)))?.height || 0);
+
+        }
+        */
+        
+        /*
+        if (inverted) {
+            return 'alt_' + code.toString();
+        }
+        */
+
+        return code.toString();
     }
 
     getChunkForPoint(point: Point2D): PIXI.Container {
@@ -756,8 +942,10 @@ export class WorldSimGame {
 
             //this.fps = Math.round(1000 / frameTime);
             const newFps = Math.round(1000 / frameTime);
+
             if (this.fps < newFps) {
                 this.fps++;
+
             } else if (this.fps > newFps) {
                 this.fps = newFps;
             }
@@ -812,6 +1000,7 @@ export class WorldSimGame {
 
                 cell.rendered = true;
 
+                //this.viewData.cells.set(key, cell);
                 this.view.cells.set(key, sprite);
                 this.container.addChild(sprite);
 
@@ -860,6 +1049,7 @@ export class WorldSimGame {
 
                 if (cellObject.cellObjectType === 'TREE') {
                     const size = (cellObject as ObjectTree).meta?.size || 1;
+
                     sprite.width = sprite.width * size;
                     sprite.height = sprite.height * size;
                 }
@@ -873,6 +1063,7 @@ export class WorldSimGame {
 
                 cellObject.rendered = true;
 
+                //this.viewData.cellObjects.set(key, cellObject);
                 this.view.cellObjects.set(key, sprite);
                 this.container.addChild(sprite);
 
@@ -915,6 +1106,7 @@ export class WorldSimGame {
                     // TODO: use pool
                     sprite = new PIXI.Sprite(texture);
 
+                    //this.viewData.entities.set(key, entity);
                     this.view.entities.set(key, sprite);
 
                     this.container.addChild(sprite);
@@ -925,6 +1117,7 @@ export class WorldSimGame {
                             `${entity.x.toFixed(2)}:${entity.y.toFixed(2)}`,
                             { fontSize: 24 }
                         );
+
                         sprite.addChild(coordsText);
                     }
                 }
@@ -985,6 +1178,36 @@ export class WorldSimGame {
         ));
     }
 
+    redrawAll(): void {
+        /*
+        for (const key of this.viewData.cellObjects.keys()) {
+            const p: Point2D = this.parseKey(key);
+            const cellObject: CellObject = this.viewData.cellObjects.get(key) as CellObject;  // FIXME: why as?
+
+            if (!cellObject) {
+                continue;
+            }
+
+            const tiling = this.isTiling(cellObject);
+            
+            // TODO: only for edges
+            if (tiling) {
+                const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite; // FIXME: why as?
+                const texture: PIXI.Texture = this.getTextureForObject(cellObject);
+
+                // Redraw tiling
+                if (sprite && sprite.texture !== texture) {
+                    console.log('Redraw: ' + key);
+                    sprite.texture = texture;
+
+                } else {
+                    console.error('Object is not rendered: ' + key);
+                }
+            }
+        }
+        */
+    }
+
     clearAll(): void {
         for (const key of this.view.cells.keys()) {
             const p: Point2D = this.parseKey(key);
@@ -996,6 +1219,7 @@ export class WorldSimGame {
 
                 //sprite.visible = false;
 
+                this.viewData.cells.delete(key);
                 this.view.cells.delete(key);
 
                 this.container.removeChild(sprite);
@@ -1017,6 +1241,7 @@ export class WorldSimGame {
 
                 //sprite.visible = false;
 
+                this.viewData.cellObjects.delete(key);
                 this.view.cellObjects.delete(key);
 
                 this.container.removeChild(sprite);

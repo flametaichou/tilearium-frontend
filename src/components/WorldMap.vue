@@ -3,6 +3,9 @@
         <div class="world-map__fps">
             FPS: {{ fps }}
         </div>
+        <div class="world-map__center">
+            Center: {{ center }}
+        </div>
         <canvas
             id="pixi"
             class="world-map"
@@ -30,6 +33,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { WorldSimGame } from '@/game/game';
+import { Point2D } from '@/classes/point2d';
 
 export default defineComponent({
     name: 'WorldMap',
@@ -43,21 +47,24 @@ export default defineComponent({
 
     data: () => ({
         intervalId: null as number,
-        fps: 0 as number
+        fps: 0 as number,
+        center: undefined as Point2D
     }),
 
     computed: {
         canvas: function (): HTMLCanvasElement {
             return document.getElementById('pixi') as HTMLCanvasElement;
-        },
+        }
     },
 
     async mounted() {
         const game = new WorldSimGame(document.getElementById('pixi') as HTMLCanvasElement, this.id);
+        
         game.init();
 
         this.intervalId = setInterval(() => {
-                this.fps = game.fps;
+            this.fps = game.fps;
+            this.center = game.center;
         }, 300);
     },
 
@@ -107,6 +114,15 @@ export default defineComponent({
         &__fps {
             position: absolute;
             top: 5px;
+            left: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid gray;
+            padding: 5px;
+        }
+
+        &__center {
+            position: absolute;
+            top: 64px;
             left: 5px;
             background-color: rgba(255, 255, 255, 0.7);
             border: 1px solid gray;

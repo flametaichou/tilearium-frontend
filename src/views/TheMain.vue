@@ -1,18 +1,37 @@
 <template>
-    <div id="nav">
-        <router-link to="/">Home</router-link>
-        |
-        <router-link to="/game">Game</router-link>
-        |
-        <router-link to="/about">About</router-link>
-        |
-        <a @click="logOut()" href="#">Log out</a>
+    <div class="main">
+        <div class="main__header">
+            <div class="main__logo">
+                <img src="@/assets/logo.png">
+            </div>
+
+            <div class="main__spacer"></div>
+
+            <div class="account">
+                <img class="account__avatar" :src="user?.profile?.picture">
+                <span class="account__name text-white" >
+                    {{ user?.profile?.name }}
+                </span>
+                <a class="account__logout text-white" @click="logOut()" href="#">Log out</a>
+            </div>
+
+            <!--
+            <router-link to="/">Home</router-link>
+            |
+            <router-link to="/game">Game</router-link>
+            |
+            <router-link to="/about">About</router-link>
+            -->
+        </div>
+
+        <div class="main__content">
+            <router-view/>
+        </div>
     </div>
-    <router-view/>
 </template>
 
 <script lang="ts">
-import { UserManager } from 'oidc-client-ts';
+import { User, UserManager } from 'oidc-client-ts';
 import { defineComponent, inject } from 'vue';
 import { Store, useStore } from 'vuex';
 
@@ -21,10 +40,16 @@ export default defineComponent({
 
     data: () => ({
         userManager: undefined as UserManager,
-        store: undefined as Store<object>
+        store: undefined as Store<{ account: User }>
     }),
 
-    mounted(): void {
+    computed: {
+        user: function (): User {
+            return this.store?.state.account;
+        }
+    },
+
+    created(): void {
         this.userManager = inject('userManager');
         this.store = useStore(); 
     },
@@ -42,16 +67,49 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-    #nav {
-        padding: 30px;
+    .main {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
 
-        a {
-            font-weight: bold;
-            color: #2c3e50;
+        &__header {
+            display: flex;
+            padding: 10px 16px;
+        }
 
-            &.router-link-exact-active {
-                color: #42b983;
+        &__content {
+            flex: 1 0;
+            //background-color: var(--gray1);
+        }
+
+        &__logo {
+            img {
+                height: 32px;
             }
+        }
+
+        &__spacer {
+            flex: 1 0;
+        }
+    }
+
+    .account {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        &__avatar {
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        &__name {
+             
+        }
+
+        &__logout {
+            font-weight: bold;
+
         }
     }
 </style>

@@ -1,3 +1,5 @@
+import { Toast } from '@/classes/toast';
+import { removeFromArray } from '@/utils/array-utils';
 import { User } from 'oidc-client-ts';
 import { createStore } from 'vuex';
 
@@ -17,13 +19,10 @@ function getAccount(): User {
 
 export default createStore({
     state: {
-        code: undefined,
-        account: getAccount()
+        account: getAccount() as User,
+        toasts: [] as Toast[]
     },
     mutations: {
-        setCode(state, code) {
-            state.code = code;
-        },
         setAccount(state, account) {
             state.account = account;
 
@@ -32,11 +31,27 @@ export default createStore({
             } else {
                 localStorage.removeItem(ACCOUNT_KEY);
             }
+        },
+
+        addToast(state, toast) {
+            state.toasts.push(toast);
+        },
+
+        removeToast(state, toast) {
+            state.toasts = removeFromArray(state.toasts, toast);
         }
     },
     actions: {
         authorize(context, response) {
             context.commit('setAccount', response);
+        },
+        
+        addToast(context, toast) {
+            context.commit('addToast', toast);
+
+            setTimeout(() => {
+                context.commit('removeToast', toast);
+            }, 5000);
         }
     },
     modules: {

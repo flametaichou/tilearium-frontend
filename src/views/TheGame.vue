@@ -1,6 +1,6 @@
 <template>
     <div class="game">
-        <world-map :id="'6df1bbd8-45b0-4b01-95a4-0ba47efbd103'"></world-map>
+        <world-map :id="worldId"></world-map>
     </div>
 </template>
 
@@ -12,6 +12,14 @@ export default defineComponent({
     name: 'TheHome',
     components: {
         WorldMap
+    },
+
+    data: () => ({
+        worldId: null as string
+    }),
+
+    created(): void {
+        this.worldId = this.$route.params.worldId.toString();
     }
 });
 </script>

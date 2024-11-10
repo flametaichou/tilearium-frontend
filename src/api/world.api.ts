@@ -1,15 +1,24 @@
-import { $http } from '@/http/http';
+import { http } from '@/http/http';
 import { AxiosResponse } from 'axios';
 import { World } from '@/classes/world';
 import { Point2D } from '@/classes/point2d';
 import { WorldCell } from '@/classes/world-cell';
 import { CellObject } from '@/classes/cell-object';
 import { WorldPart } from '@/classes/worldpart';
+import { WorldRequest } from '@/classes/world-request';
 
 class WorldApi {
 
+    getWorlds() {
+        return http.get('world/list');
+    }
+
+    submitWorld(request: WorldRequest) {
+        return http.post('world', request);
+    }
+
     getWorld(worldId: string, from: Point2D, width: number, height: number): Promise<AxiosResponse<World>> {
-        return $http.get('world', {
+        return http.get('world', {
             params: {
                 id: worldId,
                 x: from.x,
@@ -21,7 +30,7 @@ class WorldApi {
     }
 
     getWorldCells(worldId: string, from: Point2D, width: number, height: number): Promise<AxiosResponse<WorldCell[]>> {
-        return $http.get('world/cells', {
+        return http.get('world/cells', {
             params: {
                 id: worldId,
                 x: from.x,
@@ -33,7 +42,7 @@ class WorldApi {
     }
 
     getCellObjects(worldId: string, from: Point2D, width: number, height: number): Promise<AxiosResponse<CellObject[]>> {
-        return $http.get('world/cell-objects', {
+        return http.get('world/cell-objects', {
             params: {
                 id: worldId,
                 x: from.x,
@@ -45,7 +54,7 @@ class WorldApi {
     }
 
     getPart(worldId: string, from: Point2D, width: number, height: number): Promise<AxiosResponse<WorldPart>> {
-        return $http.get('world/part', {
+        return http.get('world/part', {
             params: {
                 id: worldId,
                 x: from.x,
@@ -73,4 +82,4 @@ class WorldApi {
     */
 }
 
-export const $WorldApi = new WorldApi();
+export const worldApi = new WorldApi();

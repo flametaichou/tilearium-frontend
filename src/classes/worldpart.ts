@@ -1,6 +1,7 @@
 import { WorldCell } from '@/classes/world-cell';
 import { Point2D } from '@/classes/point2d';
 import { CellObject } from '@/classes/cell-object';
+import { EntityMove } from './entity-move';
 
 export interface WorldPart {
     //start: Point2D;
@@ -13,5 +14,6 @@ export interface WorldPart {
 
     cells: WorldCell[];
     cellObjects: CellObject[];
+    entities: EntityMove[];
     // new Map(Object.entries({foo: 'bar'}));
 }

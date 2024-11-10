@@ -3,6 +3,7 @@
 </template>
 
 <script lang="ts">
+import { dialogService } from '@/service/dialog.service';
 import { UserManager } from 'oidc-client-ts';
 import { defineComponent, inject } from 'vue';
 import { useStore } from 'vuex';
@@ -14,9 +15,6 @@ export default defineComponent({
     }),
 
     created(): void {
-        //const params = this.$route.query;
-        //alert(JSON.stringify(params));
-
         const userManager: UserManager = inject('userManager');
         const store = useStore();
 
@@ -26,7 +24,7 @@ export default defineComponent({
                 this.$router.push('/');
             })
             .catch((e) => {
-                alert(e);
+                dialogService.toastError(e);
             });
     },
 

@@ -1,5 +1,7 @@
 import SockJS from 'sockjs-client';
+import store from '@/store';
 import Stomp, { Client } from 'webstomp-client';
+import { User } from 'oidc-client-ts';
 
 const debugMode = false;
 const reconnectDelay = 3000;
@@ -31,7 +33,17 @@ class WebSocketService {
                 this.stompClient.debug = () => {};
             }
 
-            const headers = {};
+            const user: User = store.state.account;
+            const accessToken = user?.id_token;
+
+            const headers = {
+                'Authorization': accessToken ? 'Bearer ' + accessToken : ''
+            };
+
+            //StompHeaders connectHeaders = new StompHeaders();
+            //connectHeaders.add("login", "test1");
+            //connectHeaders.add("passcode", "test");
+            //stompClient.connect(WS_HOST_PORT, new WebSocketHttpHeaders(), connectHeaders, new MySessionHandler());
 
             this.stompClient.connect(
                 headers,
@@ -95,4 +107,4 @@ class WebSocketService {
     }
 }
 
-export const $WebSocketService = new WebSocketService();
+export const webSocketService = new WebSocketService();

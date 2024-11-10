@@ -3,6 +3,7 @@ import { WorldCell } from '@/classes/world-cell';
 
 export interface World extends Identified {
     name: string;
+    generated: boolean;
     cells: WorldCell[];
 }
 

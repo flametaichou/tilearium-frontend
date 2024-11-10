@@ -11,4 +11,6 @@ export class EntityMove implements Point2D, Identified {
     id: string;
     x: number;
     y: number;
+    entityType: string;
+    action?: string;
 }

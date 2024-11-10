@@ -56,7 +56,7 @@ const routes: Array<RouteRecordRaw> = [
         }
     },
     {
-        path: '/game',
+        path: '/game/:worldId',
         name: 'Game',
         component: Game,
         meta: {

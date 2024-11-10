@@ -2,22 +2,21 @@
     <h1>Auth error</h1>
 </template>
 
-
 <script lang="ts">
-    import { defineComponent } from 'vue';
+import { defineComponent } from 'vue';
 
-    export default defineComponent({
-        name: 'TheCallbackError',
+export default defineComponent({
+    name: 'TheCallbackError',
 
-        data: () => ({
-        }),
+    data: () => ({
+    }),
 
-        mounted(): void {
-        },
+    mounted(): void {
+    },
 
-        methods: {
-        }
-    });
+    methods: {
+    }
+});
 </script>
 
 <style scoped>

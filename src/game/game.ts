@@ -6,12 +6,14 @@ import { CellObject, ObjectTree } from '@/classes/cell-object';
 import { Entity } from '@/classes/entity';
 import { Container } from 'pixi.js';
 import { Assets } from 'pixi.js';
-import { $WebSocketService } from '@/service/websocket.service';
+import { webSocketService } from '@/service/websocket.service';
 import { WSNotification } from '@/classes/notification';
 import { WorldPart } from '@/classes/worldpart';
 import { EntityMove } from '@/classes/entity-move';
 import { removeFromArray } from '@/utils/array-utils';
 import { IPointData } from 'pixi.js';
+import { dialogService } from '@/service/dialog.service';
+import { Path } from '@/classes/path';
 
 const cellSize = 32;
 const maxFps = 60;
@@ -57,19 +59,22 @@ export class WorldSimGame {
     data: {
         cells: Map<string, WorldCell>,
         cellObjects: Map<string, CellObject>,
-        entities: Map<string, Entity>
+        entities: Map<string, Entity>,
+        effects: Map<string, string>
     };
 
     viewData: {
         cells: Map<string, WorldCell>,
         cellObjects: Map<string, CellObject>,
-        entities: Map<string, Entity>
+        entities: Map<string, Entity>,
+        effects: Map<string, string>
     };
 
     view: {
         cells: Map<string, PIXI.Sprite>,
         cellObjects: Map<string, PIXI.Sprite>,
-        entities: Map<string, PIXI.Sprite>
+        entities: Map<string, PIXI.Sprite>,
+        effects: Map<string, PIXI.Sprite>
     };
 
     worldWidth: number;
@@ -109,7 +114,7 @@ export class WorldSimGame {
             'KeyA': ActionKey.MOVE_LEFT,
 
             'ArrowRight': ActionKey.MOVE_RIGHT,
-            'KeyD': ActionKey.MOVE_RIGHT,
+            'KeyD': ActionKey.MOVE_RIGHT
         };
 
         this.chunks = new Map();
@@ -127,19 +132,22 @@ export class WorldSimGame {
         this.data = {
             cells: new Map() as Map<string, WorldCell>,
             cellObjects: new Map() as Map<string, CellObject>,
-            entities: new Map() as Map<string, Entity>
+            entities: new Map() as Map<string, Entity>,
+            effects: new Map() as Map<string, string>
         };
 
         this.viewData = {
             cells: new Map() as Map<string, WorldCell>,
             cellObjects: new Map() as Map<string, CellObject>,
-            entities: new Map() as Map<string, Entity>
+            entities: new Map() as Map<string, Entity>,
+            effects: new Map() as Map<string, string>
         };
 
         this.view = {
             cells: new Map() as Map<string, PIXI.Sprite>,
             cellObjects: new Map() as Map<string, PIXI.Sprite>,
-            entities: new Map() as Map<string, PIXI.Sprite>
+            entities: new Map() as Map<string, PIXI.Sprite>,
+            effects: new Map() as Map<string, PIXI.Sprite>
         };
     }
 
@@ -155,7 +163,7 @@ export class WorldSimGame {
             width: this.canvas.clientWidth,
             height: this.canvas.clientHeight,
             //antialias: true,
-            view: this.canvas,
+            view: this.canvas
             //clearBeforeRender: false
             //background: '#1099bb',
             //resizeTo: window
@@ -185,6 +193,8 @@ export class WorldSimGame {
         this.container.sortableChildren = true;
         this.container.x = this.app.screen.width / 2;
         this.container.y = this.app.screen.height / 2;
+        this.container.interactive = true;
+        this.container.on('click', (e) => this.sendMouseClicked(e, this.zero));
 
         this.app.stage.addChild(this.container as PIXI.Container);
 
@@ -253,8 +263,11 @@ export class WorldSimGame {
         this.loadTexture('wall', 'object');
         this.loadTexture('road', 'object', true);
 
-        this.loadTexture('entity', 'entity');
+        this.loadTexture('entity_villager', 'entity');
+        this.loadTexture('entity_player', 'entity');
+        this.loadTexture('entity_item', 'entity');
         this.loadTexture('empty');
+        this.loadTexture('path');
 
         for (const textureName of this.textures.keys()) {
             //PIXI.Assets.load(this.textures.get(textureName));
@@ -280,8 +293,8 @@ export class WorldSimGame {
 
         this.clearPixi();
 
-        $WebSocketService.init().then(() => {
-            $WebSocketService.subscribe(
+        webSocketService.init().then(() => {
+            webSocketService.subscribe(
                 (notification: WSNotification) => {
                     switch (notification.type) {
                         case 'MAP_PART':
@@ -304,6 +317,11 @@ export class WorldSimGame {
 
                             this.data.cellObjects = new Map([...this.data.cellObjects, ...this.transformCellObjects(cellObjects)]);
                             this.viewData.cellObjects = new Map([...this.data.cellObjects]);
+
+                            const entities: EntityMove[] = worldPart.entities;
+
+                            this.data.entities = new Map([...this.data.entities, ...this.transformEntities(entities as Entity[])]);
+                            this.viewData.entities = new Map([...this.data.entities]);
 
                             console.log('-------------------------------------------');
                             console.log(`Cells size: ${cells.length}`);
@@ -338,12 +356,24 @@ export class WorldSimGame {
                         case 'ENTITY':
                             const entityMove: EntityMove = notification.body as EntityMove;
 
-                            // FIXME: sprites can be not removed from pixi
-                            this.data.entities = new Map([
-                                ...this.data.entities,
-                                ...this.transformEntities([new Entity(entityMove.id, entityMove.x, entityMove.y)])
-                            ]);
-                            this.viewData.entities = new Map([...this.data.entities]);
+                            if (entityMove.action === 'REMOVE') {
+
+                                const sprite: PIXI.Sprite = this.view.entities.get(entityMove.id) as PIXI.Sprite;  // FIXME: why as?
+                                
+                                this.container.removeChild(sprite);
+
+                                this.data.entities.delete(entityMove.id);
+                                this.viewData.entities.delete(entityMove.id);
+                                this.view.entities.delete(entityMove.id);
+
+                            } else {
+                                // FIXME: sprites can be not removed from pixi
+                                this.data.entities = new Map([
+                                    ...this.data.entities,
+                                    ...this.transformEntities([entityMove as Entity])
+                                ]);
+                                this.viewData.entities = new Map([...this.data.entities]);
+                            }
 
                             break;
 
@@ -352,15 +382,25 @@ export class WorldSimGame {
                             //TODO: draw
 
                             break;
+                        case 'PATH':
+                            const pathPacket: Path = notification.body as Path;
+    
+                            const path: Point2D[] = pathPacket.path;
+    
+                            // FIXME: do not clean all effects
+                            this.data.effects =  this.transformEffects(path as Point2D[]);
+                            this.viewData.effects = new Map([...this.data.effects]);
+
+                            break;
 
                         default:
-                            alert('UNKNOWN NOTIFICATION: ' + notification.type);
+                            dialogService.toastError('UNKNOWN NOTIFICATION: ' + notification.type);
                     }
                 },
                 false
             );
 
-            $WebSocketService.send('/game/map-control', {
+            webSocketService.send('/game/map-control', {
                 type: 'SET_SETTINGS',
                 body: {
                     worldId: this.id,
@@ -466,11 +506,28 @@ export class WorldSimGame {
 
     sendKeyPressed(key: ActionKey, state: boolean) {
         console.log(`[Input] (${new Date().toLocaleTimeString()}) Key: ${key} state: ${state}`);
-        $WebSocketService.send('/game/map-control', {
+        webSocketService.send('/game/map-control', {
             type: 'KEY_STATE',
             body: {
                 action: key,
                 state: state
+            }
+        });
+    }
+
+    sendMouseClicked(event: MouseEvent, zero: Point2D) {
+        const point: Point2D = new Point2D(
+            zero.x + (event.clientX / cellSize), 
+            zero.y + (event.clientY / cellSize)
+        );
+
+        console.log(`[Input] (${new Date().toLocaleTimeString()}) Point: ${point}`);
+
+        webSocketService.send('/game/map-control', {
+            type: 'MOUSE_INPUT',
+            body: {
+                button: 'LEFT',
+                point: point
             }
         });
     }
@@ -606,6 +663,19 @@ export class WorldSimGame {
         }
 
         return entityMap;
+    }
+
+    // FIXME: not only path effects
+    transformEffects(path: Point2D[]): Map<string, string> {
+        const map: Map<string, string> = new Map<string, string>();
+
+        for (let counter = 0; counter < path.length; counter++) {
+            const p: Point2D = path[counter];
+
+            map.set(this.getKey(p), 'path');
+        }
+        
+        return map;
     }
 
     clearPixi() {
@@ -1092,13 +1162,13 @@ export class WorldSimGame {
 
         for (const key of this.data.entities.keys()) {
             const entity: Entity = this.data.entities.get(key) as Entity; // FIXME: why as?
-
+            
             // TODO: the problem was here
             //const rendered = entity.rendered;
             const rendered = this.view.entities.has(key);
 
             if (!rendered) {
-                const textureName = 'entity';
+                const textureName = 'entity_' + entity.entityType?.toLowerCase();
                 const texture = this.getTexture(textureName);
                 let sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
 
@@ -1106,6 +1176,9 @@ export class WorldSimGame {
                     // TODO: use pool
                     sprite = new PIXI.Sprite(texture);
 
+                    sprite.x = entity.x * cellSize - (texture.width / 2);
+                    sprite.y = entity.y * cellSize - texture.height;
+                    
                     //this.viewData.entities.set(key, entity);
                     this.view.entities.set(key, sprite);
 
@@ -1136,10 +1209,12 @@ export class WorldSimGame {
                 // depends on square part (--, +-, ++, -+)
 
                 // TODO: move stepped only if it is not creation
+                /*
                 this.moveSmooth(sprite, new Point2D(
                     entity.x * cellSize - (texture.width / 2),
                     entity.y * cellSize - texture.height
                 ));
+                */
 
                 // z-index = bottom edge of the sprite
                 //sprite.zIndex = entity.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
@@ -1151,7 +1226,7 @@ export class WorldSimGame {
 
             } else {
                 // FIXME: it's smoother but code is not good enough
-                const textureName = 'entity';
+                const textureName = 'entity_' + entity.entityType?.toLowerCase();
                 const texture = this.getTexture(textureName);
                 const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
 
@@ -1165,6 +1240,37 @@ export class WorldSimGame {
                 sprite.zIndex = entity.y * cellSize + (texture.height > cellSize ? (texture.height - cellSize) : 0);
 
                 //console.log('cell object already rendered');
+            }
+        }
+
+        for (const key of this.data.effects.keys()) {
+            const p: Point2D = this.parseKey(key);
+            const effect: string = this.data.effects.get(key) as string;
+
+            if (!effect) {
+                continue;
+            }
+
+            const rendered = this.view.effects.has(key);
+
+            if (!rendered) {
+                const texture = this.getTexture('path');
+                // TODO: use pool
+                const sprite = new PIXI.Sprite(texture);
+
+                sprite.x = p.x * cellSize - (sprite.width > cellSize ? (sprite.width - cellSize) / 2 : 0);
+                sprite.y = p.y * cellSize - (sprite.height > cellSize ? (sprite.height - cellSize) : 0);
+                sprite.zIndex = p.y * cellSize;
+
+                //effect.rendered = true;
+
+                this.view.effects.set(key, sprite);
+                this.container.addChild(sprite);
+
+                this.data.effects.delete(key);
+
+            } else {
+                this.data.effects.delete(key);
             }
         }
 
@@ -1270,5 +1376,20 @@ export class WorldSimGame {
             }
         }
         */
+
+        for (const key of this.view.effects.keys()) {
+            const p: Point2D = this.parseKey(key);
+
+            if (!this.viewData.effects.get(key)) {
+                const sprite: PIXI.Sprite = this.view.effects.get(key) as PIXI.Sprite;  // FIXME: why as?
+
+                //sprite.visible = false;
+
+                this.viewData.effects.delete(key);
+                this.view.effects.delete(key);
+
+                this.container.removeChild(sprite);
+            }
+        }
     }
 }

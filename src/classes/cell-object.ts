@@ -1,5 +1,3 @@
-import * as PIXI from 'pixi.js';
-
 export class CellObject {
     constructor(x: number, y: number) {
         this.x = x;
@@ -20,4 +18,8 @@ export class ObjectTree {
         size: number,
         type: string
     };
+}
+
+export class CellObjectMove extends CellObject {
+    action: string;
 }

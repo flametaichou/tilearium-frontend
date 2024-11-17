@@ -2,7 +2,7 @@ import { ActionKey } from '@/classes/action-key';
 import * as PIXI from 'pixi.js';
 import { Point2D } from '@/classes/point2d';
 import { WorldCell } from '@/classes/world-cell';
-import { CellObject, ObjectTree } from '@/classes/cell-object';
+import { CellObject, CellObjectMove, ObjectTree } from '@/classes/cell-object';
 import { Entity } from '@/classes/entity';
 import { Container } from 'pixi.js';
 import { Assets } from 'pixi.js';
@@ -14,6 +14,11 @@ import { removeFromArray } from '@/utils/array-utils';
 import { IPointData } from 'pixi.js';
 import { dialogService } from '@/service/dialog.service';
 import { Path } from '@/classes/path';
+import { LogEvent } from '@/classes/log-event';
+import { DebugContainer } from './debug-container';
+import { LogContainer } from './log-container';
+import { ActionsContainer } from './actions-container';
+import { TreasureMapContainer } from './treasure-map-container';
 
 const cellSize = 32;
 const maxFps = 60;
@@ -23,16 +28,27 @@ const debugMode = false;
 const chunkSize = 16;
 
 const spritesPath = '/sprites/';
+const mapSpritesPath = '/sprites-map/';
 
 export class WorldSimGame {
     id: string;
+    wrapper: HTMLDivElement;
     canvas: HTMLCanvasElement;
+    ui: HTMLDivElement;
+    uiUpdateIntervalId: number;
+
+    logContainer: LogContainer;
+    info: HTMLDivElement;
+    actions: ActionsContainer;
+    debug: DebugContainer;
+    treasureMapContainer: TreasureMapContainer;
 
     initializing: boolean;
     loading: boolean;
     initialized: boolean;
     stopped: boolean;
     fps: number;
+    log: string[];
 
     keysPressed:  string[];
     keysMapping: { [key: string]: ActionKey };
@@ -40,10 +56,13 @@ export class WorldSimGame {
     app:  PIXI.Application;
     // TODO: rename to stage
     container:  PIXI.Container;
+
+    /*
     ui:  PIXI.Container;
     uiTimer: PIXI.Text;
     uiInventory: PIXI.Container;
     uiQuest: PIXI.Container;
+    */
 
     chunks: Map<string, PIXI.Container>;
 
@@ -77,6 +96,11 @@ export class WorldSimGame {
         effects: Map<string, PIXI.Sprite>
     };
 
+    treasureMap: {
+        cells: Map<string, WorldCell>,
+        cellObjects: Map<string, CellObject>
+    };
+
     worldWidth: number;
     worldHeight: number;
     zero: Point2D;
@@ -98,9 +122,30 @@ export class WorldSimGame {
     };
     */
 
-    constructor(canvas: HTMLCanvasElement, id: string) {
+    constructor(wrapper: HTMLDivElement, id: string) {
         this.id = id;
-        this.canvas = canvas;
+
+        this.canvas = document.createElement('canvas');
+        this.canvas.classList.add('game__canvas');
+        
+        this.wrapper = wrapper;
+        this.wrapper.classList.add('game__wrapper');
+        this.wrapper.appendChild(this.canvas);
+
+        this.debug = new DebugContainer(this);
+        this.logContainer = new LogContainer(this);
+        this.actions = new ActionsContainer(this);
+
+        /*
+        const dialogMessage = document.createElement('div');
+        const content = document.createTextNode('Hi there and greetings!');
+
+        dialogMessage.classList.add('game-dialog');
+        dialogMessage.appendChild(content);
+
+        this.canvas.appendChild(dialogMessage);
+        //document.body.insertBefore(this.canvas, dialogMessage);
+        */
 
         this.keysPressed = [];
         this.keysMapping = {
@@ -149,11 +194,17 @@ export class WorldSimGame {
             entities: new Map() as Map<string, PIXI.Sprite>,
             effects: new Map() as Map<string, PIXI.Sprite>
         };
+
+        this.treasureMap = {
+            cells: new Map() as Map<string, WorldCell>,
+            cellObjects: new Map() as Map<string, CellObject>
+        };
     }
 
     stop(): void {
         this.stopped = true;
         document.removeEventListener('keydown', this.onKeyPressed);
+        clearInterval(this.uiUpdateIntervalId);
     }
 
     async init(): Promise<void> {
@@ -198,6 +249,7 @@ export class WorldSimGame {
 
         this.app.stage.addChild(this.container as PIXI.Container);
 
+        /*
         this.ui = new Container();
 
         this.uiTimer = new PIXI.Text(
@@ -217,6 +269,7 @@ export class WorldSimGame {
         this.ui.addChild(this.uiQuest);
 
         this.app.stage.addChild(this.ui as PIXI.Container);
+        */
 
         // Init textures
         this.loadTexture('grass', 'cell');
@@ -251,8 +304,6 @@ export class WorldSimGame {
         this.loadTexture('mushroom_brown', 'object');
         this.loadTexture('mushroom_red', 'object');
 
-        this.loadTexture('bush', 'object');
-
         this.loadTexture('water_plant_water_lily', 'object');
         this.loadTexture('water_plant_cattail', 'object');
 
@@ -268,6 +319,33 @@ export class WorldSimGame {
         this.loadTexture('entity_item', 'entity');
         this.loadTexture('empty');
         this.loadTexture('path');
+
+        // ---
+
+        /*
+        this.loadTreasureMapTexture('grass', 'cell');
+        this.loadTreasureMapTexture('dirt', 'cell');
+        this.loadTreasureMapTexture('sand', 'cell');
+        this.loadTreasureMapTexture('water', 'cell');
+        this.loadTreasureMapTexture('ice', 'cell');
+        this.loadTreasureMapTexture('snow', 'cell');
+        this.loadTreasureMapTexture('leaves', 'cell');
+
+        this.loadTreasureMapTexture('tree', 'object');
+        this.loadTreasureMapTexture('dead_tree', 'object');
+        this.loadTreasureMapTexture('bush', 'object');
+        this.loadTreasureMapTexture('grass', 'object');
+        this.loadTreasureMapTexture('flower', 'object');
+        this.loadTreasureMapTexture('mushroom', 'object');
+        this.loadTreasureMapTexture('water_plant', 'object');
+        this.loadTreasureMapTexture('cliff', 'object');
+        this.loadTreasureMapTexture('rock', 'object');
+        this.loadTreasureMapTexture('storage', 'object');
+        this.loadTreasureMapTexture('house', 'object');
+        this.loadTreasureMapTexture('road', 'object');
+
+        this.loadTreasureMapTexture('empty');
+        */
 
         for (const textureName of this.textures.keys()) {
             //PIXI.Assets.load(this.textures.get(textureName));
@@ -378,10 +456,29 @@ export class WorldSimGame {
                             break;
 
                         case 'CELL_OBJECT':
-                            //const cellObject: EntityMove = notification.body as EntityMove;
-                            //TODO: draw
+                            const cellObject: CellObjectMove = notification.body as CellObjectMove;
+
+                            if (cellObject.action === 'REMOVE') {
+
+                                const key = this.getKey(cellObject);
+                                const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite;
+                                
+                                this.container.removeChild(sprite);
+
+                                this.data.cellObjects.delete(key);
+                                this.viewData.cellObjects.delete(key);
+                                this.view.cellObjects.delete(key);
+
+                            } else {
+                                this.data.cellObjects = new Map([
+                                    ...this.data.cellObjects,
+                                    ...this.transformCellObjects([cellObject as CellObject])
+                                ]);
+                                this.viewData.cellObjects = new Map([...this.data.cellObjects]);
+                            }
 
                             break;
+
                         case 'PATH':
                             const pathPacket: Path = notification.body as Path;
     
@@ -390,6 +487,27 @@ export class WorldSimGame {
                             // FIXME: do not clean all effects
                             this.data.effects =  this.transformEffects(path as Point2D[]);
                             this.viewData.effects = new Map([...this.data.effects]);
+
+                            break;
+
+                        case 'LOG':
+                            const logEvent: LogEvent = notification.body as LogEvent;
+
+                            this.log.push(`[${new Date().toLocaleDateString()}] ${logEvent.message}`);
+
+                            if (this.log.length > 10) {
+                                this.log.slice(0, 1);
+                            }
+    
+                            break;
+
+                        case 'TREASURE_MAP':
+                            const map: WorldPart = notification.body as WorldPart;
+
+                            this.treasureMap.cells = new Map([...this.transformCells(map.cells)]);
+                            this.treasureMap.cellObjects = new Map([...this.transformCellObjects(map.cellObjects)]);
+        
+                            this.treasureMapContainer = new TreasureMapContainer(this);
 
                             break;
 
@@ -418,9 +536,11 @@ export class WorldSimGame {
 
                 if (this.fps < newFps) {
                     this.fps++;
+
                 } else if (this.fps > newFps) {
                     this.fps = newFps;
                 }
+
             }, {}, -100);
 
             this.app.ticker.add((delta) => {
@@ -429,7 +549,14 @@ export class WorldSimGame {
                 this.clearAll();
             }, {}, -100);
 
+            this.log = [];
+
             //this.render();
+
+            this.uiUpdateIntervalId = setInterval(() => {
+                this.debug.update();
+                this.logContainer.update();
+            }, 300);
         });
 
         // TODO: check bind
@@ -530,6 +657,20 @@ export class WorldSimGame {
                 point: point
             }
         });
+    }
+
+    sendMouseClickedOnEntity(event: MouseEvent, entity: Entity) {
+        console.log(`[Input] (${new Date().toLocaleTimeString()}) Entity: ${entity}`);
+
+        webSocketService.send('/game/map-control', {
+            type: 'MOUSE_INPUT',
+            body: {
+                button: 'LEFT',
+                entityId: entity.id
+            }
+        });
+
+        event.stopPropagation();
     }
 
     /*
@@ -823,6 +964,17 @@ export class WorldSimGame {
         return height / (minHeight + maxHeight);
     }
 
+    /*
+    loadTreasureMapTexture(textureName: string, type?: string): void {
+        if (!type) {
+            type = '';
+        }
+        type = type + '/';
+
+        this.textures.set(`${textureName}`, `${mapSpritesPath}${type}${textureName}.png`);
+    }
+    */
+
     loadTexture(textureName: string, type?: string, tiling?: boolean): void {
         if (!type) {
             type = '';
@@ -853,7 +1005,7 @@ export class WorldSimGame {
     }
 
     getTextureForObject(cellObject: CellObject): PIXI.Texture {
-        let textureName = cellObject.cellObjectType.toLowerCase();
+        let textureName = cellObject?.cellObjectType?.toLowerCase();
 
         if (['TREE', 'FLOWER', 'DEAD_TREE', 'GRASS', 'MUSHROOM', 'WATER_PLANT'].includes(cellObject.cellObjectType)) {
             const type = (cellObject as ObjectTree).meta?.type;
@@ -1193,6 +1345,11 @@ export class WorldSimGame {
 
                         sprite.addChild(coordsText);
                     }
+
+                    // https://pixijs.com/7.x/examples/events/click
+                    sprite.eventMode = 'static';
+                    sprite.cursor = 'pointer';
+                    sprite.on('pointerdown', (e) => this.sendMouseClickedOnEntity(e, entity));
                 }
 
                 if (debugMode) {

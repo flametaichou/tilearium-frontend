@@ -1,5 +1,3 @@
-import * as PIXI from 'pixi.js';
-
 export class WorldCell {
     constructor(x: number, y: number, height: number) {
         this.x = x;

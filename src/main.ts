@@ -4,6 +4,7 @@ import router from './router';
 import store from './store';
 import '@/assets/css/ui-kit.css';
 import { OidcClientSettings, UserManager } from 'oidc-client-ts';
+import '@/game/game.scss';
 
 // https://accounts.google.com/.well-known/openid-configuration
 const settings: OidcClientSettings = {

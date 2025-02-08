@@ -205,6 +205,7 @@ export class WorldSimGame {
         this.stopped = true;
         document.removeEventListener('keydown', this.onKeyPressed);
         clearInterval(this.uiUpdateIntervalId);
+        // TODO: logout, remove session
     }
 
     async init(): Promise<void> {

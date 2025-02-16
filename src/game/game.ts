@@ -5,7 +5,6 @@ import { WorldCell } from '@/classes/world-cell';
 import { CellObject, CellObjectMove, ObjectTree } from '@/classes/cell-object';
 import { Entity } from '@/classes/entity';
 import { Container } from 'pixi.js';
-import { Assets } from 'pixi.js';
 import { webSocketService } from '@/service/websocket.service';
 import { WSNotification } from '@/classes/notification';
 import { WorldPart } from '@/classes/worldpart';
@@ -19,6 +18,7 @@ import { DebugContainer } from './debug-container';
 import { LogContainer } from './log-container';
 import { ActionsContainer } from './actions-container';
 import { TreasureMapContainer } from './treasure-map-container';
+import { TextureRegistry } from './texture-registry';
 
 const cellSize = 32;
 const maxFps = 60;
@@ -26,9 +26,6 @@ const debugMode = false;
 
 // Chunks can be useful to work with smaller arrays (faster)
 const chunkSize = 16;
-
-const spritesPath = '/sprites/';
-const mapSpritesPath = '/sprites-map/';
 
 export class WorldSimGame {
     id: string;
@@ -66,8 +63,7 @@ export class WorldSimGame {
 
     chunks: Map<string, PIXI.Container>;
 
-    textures:  Map<string, string>;
-    textureRegistry:  Map<string, PIXI.Texture>;
+    textureRegistry:  TextureRegistry;
 
     //world: undefined as World | undefined;
 
@@ -163,8 +159,7 @@ export class WorldSimGame {
         };
 
         this.chunks = new Map();
-        this.textures = new Map();
-        this.textureRegistry = new Map();
+        this.textureRegistry = new TextureRegistry('/sprites');
 
         this.hints = [
             new Point2D(-11, -11),
@@ -272,103 +267,7 @@ export class WorldSimGame {
         this.app.stage.addChild(this.ui as PIXI.Container);
         */
 
-        // Init textures
-        this.loadTexture('grass', 'cell');
-        this.loadTexture('dirt', 'cell');
-        this.loadTexture('sand', 'cell');
-        this.loadTexture('water', 'cell');
-        this.loadTexture('ice', 'cell');
-        this.loadTexture('snow', 'cell');
-        this.loadTexture('leaves', 'cell');
-
-        this.loadTexture('tree', 'object');
-        this.loadTexture('tree_cactus', 'object');
-        this.loadTexture('tree_maple', 'object');
-        this.loadTexture('tree_oak', 'object');
-        this.loadTexture('tree_palm', 'object');
-        this.loadTexture('tree_pine', 'object');
-        this.loadTexture('tree_poplar', 'object');
-        this.loadTexture('tree_spruce', 'object');
-        this.loadTexture('tree_willow', 'object');
-
-        this.loadTexture('dead_tree', 'object');
-        this.loadTexture('dead_tree_tree', 'object');
-        this.loadTexture('dead_tree_log', 'object');
-        this.loadTexture('dead_tree_stump', 'object');
-
-        this.loadTexture('bush', 'object');
-
-        this.loadTexture('grass_tall_grass', 'object');
-
-        this.loadTexture('flower_daisy', 'object');
-
-        this.loadTexture('mushroom_brown', 'object');
-        this.loadTexture('mushroom_red', 'object');
-
-        this.loadTexture('water_plant_water_lily', 'object');
-        this.loadTexture('water_plant_cattail', 'object');
-
-        this.loadTexture('cliff', 'object');
-        this.loadTexture('rock', 'object');
-        this.loadTexture('storage', 'object');
-        this.loadTexture('house', 'object');
-        this.loadTexture('wall', 'object');
-        this.loadTexture('road', 'object', true);
-
-        this.loadTexture('entity_villager', 'entity');
-        this.loadTexture('entity_player', 'entity');
-        this.loadTexture('entity_item', 'entity');
-        this.loadTexture('empty');
-        this.loadTexture('path');
-
-        // ---
-
-        /*
-        this.loadTreasureMapTexture('grass', 'cell');
-        this.loadTreasureMapTexture('dirt', 'cell');
-        this.loadTreasureMapTexture('sand', 'cell');
-        this.loadTreasureMapTexture('water', 'cell');
-        this.loadTreasureMapTexture('ice', 'cell');
-        this.loadTreasureMapTexture('snow', 'cell');
-        this.loadTreasureMapTexture('leaves', 'cell');
-
-        this.loadTreasureMapTexture('tree', 'object');
-        this.loadTreasureMapTexture('dead_tree', 'object');
-        this.loadTreasureMapTexture('bush', 'object');
-        this.loadTreasureMapTexture('grass', 'object');
-        this.loadTreasureMapTexture('flower', 'object');
-        this.loadTreasureMapTexture('mushroom', 'object');
-        this.loadTreasureMapTexture('water_plant', 'object');
-        this.loadTreasureMapTexture('cliff', 'object');
-        this.loadTreasureMapTexture('rock', 'object');
-        this.loadTreasureMapTexture('storage', 'object');
-        this.loadTreasureMapTexture('house', 'object');
-        this.loadTreasureMapTexture('road', 'object');
-
-        this.loadTreasureMapTexture('empty');
-        */
-
-        for (const textureName of this.textures.keys()) {
-            //PIXI.Assets.load(this.textures.get(textureName));
-            //PIXI.Texture.addToCache(texture, textureName);
-
-            //var tile = PIXI.Sprite.fromFrame(filename);
-            //var tile = PIXI.Sprite.fromImage(filename);
-
-            try {
-                await Assets.load(this.textures.get(textureName)).then((result) => {
-                    //const texture: PIXI.Texture = PIXI.Texture.from(this.textures.get(textureName), true);
-                    this.textureRegistry.set(textureName, result);
-                });
-            
-            } catch (e) {
-                console.error('Error on loading texture: ' + textureName);
-
-                await Assets.load(this.textures.get('empty')).then((result) => {
-                    this.textureRegistry.set(textureName, result);
-                });
-            }
-        }
+        await this.textureRegistry.init();
 
         this.clearPixi();
 
@@ -402,6 +301,7 @@ export class WorldSimGame {
                             this.data.entities = new Map([...this.data.entities, ...this.transformEntities(entities as Entity[])]);
                             this.viewData.entities = new Map([...this.data.entities]);
 
+                            /*
                             console.log('-------------------------------------------');
                             console.log(`Cells size: ${cells.length}`);
                             console.log(`Objects size: ${cellObjects.length}`);
@@ -413,8 +313,7 @@ export class WorldSimGame {
                                 console.log(`Chunk ${key} size: ${this.chunks.get(key).children.length }`);
                             }
 
-                            console.log(`Textures count: ${this.textures.size}`);
-                            console.log(`Textures registry count: ${this.textureRegistry.size}`);
+                            console.log(`Textures count: ${this.textureRegistry.sprites.size}`);
 
                             console.log(`Data cells count: ${this.data.cells.size}`);
                             console.log(`Data objects count: ${this.data.cellObjects.size}`);
@@ -427,6 +326,7 @@ export class WorldSimGame {
                             console.log(`Keys pressed count: ${this.keysPressed.length}`);
 
                             console.log('-------------------------------------------');
+                            */
 
                             // 1-2ms here
 
@@ -965,170 +865,6 @@ export class WorldSimGame {
         return height / (minHeight + maxHeight);
     }
 
-    /*
-    loadTreasureMapTexture(textureName: string, type?: string): void {
-        if (!type) {
-            type = '';
-        }
-        type = type + '/';
-
-        this.textures.set(`${textureName}`, `${mapSpritesPath}${type}${textureName}.png`);
-    }
-    */
-
-    loadTexture(textureName: string, type?: string, tiling?: boolean): void {
-        if (!type) {
-            type = '';
-        }
-        type = type + '/';
-
-        if (tiling) {
-            const arr: number[] = [4, 7, 13, 14, 15, 21, 22, 23, 28, 29, 30, 31];
-
-            for (const code of arr) {
-                this.textures.set(`${textureName}_${code}`, `${spritesPath}${type}${textureName}_${code}.png`);
-                this.textures.set(`${textureName}_alt_${code}`, `${spritesPath}${type}${textureName}_alt_${code}.png`);
-            }
-        } else {
-            this.textures.set(`${textureName}`, `${spritesPath}${type}${textureName}.png`);
-        }
-    }
-
-    getTexture(textureName: string): PIXI.Texture {
-        if (this.textureRegistry.get(textureName)) {
-            // TODO: why as?
-            return this.textureRegistry.get(textureName) as PIXI.Texture ;
-        }
-
-        console.warn('No texture found for: ' + textureName);
-
-        return this.textureRegistry.get('empty') as PIXI.Texture ;
-    }
-
-    getTextureForObject(cellObject: CellObject): PIXI.Texture {
-        let textureName = cellObject?.cellObjectType?.toLowerCase();
-
-        if (['TREE', 'FLOWER', 'DEAD_TREE', 'GRASS', 'MUSHROOM', 'WATER_PLANT'].includes(cellObject.cellObjectType)) {
-            const type = (cellObject as ObjectTree).meta?.type;
-
-            if (type) {
-                textureName += `_${type.toLowerCase()}`;
-            }
-        }
-
-        const tiling = this.isTiling(cellObject);
-
-        if (tiling) {
-            const tile = this.getTileForObject(cellObject);
-
-            return this.getTexture(`${textureName}_${tile}`);
-        }
-
-        return this.getTexture(textureName);
-    }
-
-    isTiling(cellObject: CellObject): boolean {
-        return ['ROAD'].includes(cellObject.cellObjectType);
-    }
-
-    getTileForObject(cellObject: CellObject): string {
-
-        //const cell1: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y - 1)));
-        const cell2: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x, cellObject.y - 1)));
-        //const cell3: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y - 1)));
-        const cell4: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y)));
-        const cell6: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y)));
-        //const cell7: CellObject = this.data.cellObjects.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y + 1)));
-        const cell8: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x, cellObject.y + 1)));
-        //const cell9: CellObject = this.viewData.cellObjects.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y + 1)));
-
-        //const byte1 = cell1.cellObjectType === cellObject.cellObjectType;
-        const byte2 = cell2?.cellObjectType === cellObject.cellObjectType;
-        //const byte3 = cell3.cellObjectType === cellObject.cellObjectType;
-        const byte4 = cell4?.cellObjectType === cellObject.cellObjectType;
-        const byte5 = true;
-        const byte6 = cell6?.cellObjectType === cellObject.cellObjectType;
-        //const byte7 = cell7.cellObjectType === cellObject.cellObjectType;
-        const byte8 = cell8?.cellObjectType === cellObject.cellObjectType;
-        //const byte9 = cell9.cellObjectType === cellObject.cellObjectType;
-
-        // TODO: удаляются из data после отрисовки
-
-        const binaryString = (
-            (byte2 ? '1' : '0') 
-            + (byte4 ? '1' : '0') 
-            + (byte5 ? '1' : '0') 
-            + (byte6 ? '1' : '0') 
-            + (byte8 ? '1' : '0')
-        );
-
-        console.log(binaryString);
-
-        let code = parseInt(binaryString, 2);
-
-        console.log(code);
-
-        if (code === 20 || code === 5) {
-            code = 21;
-        }
-
-        if (code === 12 || code === 6) {
-            code = 14;
-        }
-
-        //let inverted = false;
-
-        /*
-        if (cellObject.cellObjectType === 'CLIFF') {
-            let x = 0;
-            let y = 0;
-
-            if (code === 7 || code === 22) {
-                x = -1;
-
-            } else if (code === 13 || code === 28) {
-                x = 1;    
-            }
-
-            if (code === 7 || code === 13) {
-                y = -1;
-
-            } else if (code === 22 || code === 28) {
-                y = 1;    
-            }
-
-            const c1: WorldCell = this.viewData.cells.get(this.getKey(new Point2D(cellObject.x + x, cellObject.y - y)));
-            const c2: WorldCell = this.viewData.cells.get(this.getKey(new Point2D(cellObject.x, cellObject.y)));
-
-            if (c1?.height > c2?.height) {
-                inverted = true;
-            }
-        }
-        */
-
-        /*
-        let topToBottom: boolean = true;
-        let leftToRight: boolean = true;
-
-        if (cellObject.cellObjectType === 'CLIFF') {
-            topToBottom = (this.data.cells.get(this.getKey(new Point2D(cellObject.x, cellObject.y - 1)))?.height || 0) >
-                (this.data.cells.get(this.getKey(new Point2D(cellObject.x, cellObject.y + 1)))?.height || 0);
-
-            leftToRight = (this.data.cells.get(this.getKey(new Point2D(cellObject.x - 1, cellObject.y)))?.height || 0) >
-                (this.data.cells.get(this.getKey(new Point2D(cellObject.x + 1, cellObject.y)))?.height || 0);
-
-        }
-        */
-        
-        /*
-        if (inverted) {
-            return 'alt_' + code.toString();
-        }
-        */
-
-        return code.toString();
-    }
-
     getChunkForPoint(point: Point2D): PIXI.Container {
         const key = this.getKey(new Point2D(Math.floor(point.x / chunkSize), Math.floor(point.y / chunkSize)));
 
@@ -1211,7 +947,7 @@ export class WorldSimGame {
                 // TODO: if cell type changed
                 // TODO: if sprite already exist
                 const textureName = cell.cellType.toLowerCase();
-                const texture = this.getTexture(textureName);
+                const texture = this.textureRegistry.getTexture(textureName);
                 const sprite = new PIXI.Sprite(texture);
 
                 sprite.x = p.x * cellSize;
@@ -1266,7 +1002,7 @@ export class WorldSimGame {
             if (!rendered) {
                 // TODO: if cellObject type changed
                 // TODO: if sprite already exist
-                const texture = this.getTextureForObject(cellObject);
+                const texture = this.textureRegistry.getTextureForObject(cellObject);
                 // TODO: use pool
                 const sprite = new PIXI.Sprite(texture);
 
@@ -1322,7 +1058,7 @@ export class WorldSimGame {
 
             if (!rendered) {
                 const textureName = 'entity_' + entity.entityType?.toLowerCase();
-                const texture = this.getTexture(textureName);
+                const texture = this.textureRegistry.getTexture(textureName);
                 let sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
 
                 if (!sprite) {
@@ -1385,7 +1121,7 @@ export class WorldSimGame {
             } else {
                 // FIXME: it's smoother but code is not good enough
                 const textureName = 'entity_' + entity.entityType?.toLowerCase();
-                const texture = this.getTexture(textureName);
+                const texture = this.textureRegistry.getTexture(textureName);
                 const sprite: PIXI.Sprite = this.view.entities.get(key) as PIXI.Sprite;
 
                 // Entities has different coordinates. They need to be placed at exact coordinates (on the middle of the block)
@@ -1412,7 +1148,7 @@ export class WorldSimGame {
             const rendered = this.view.effects.has(key);
 
             if (!rendered) {
-                const texture = this.getTexture('path');
+                const texture = this.textureRegistry.getTexture('path');
                 // TODO: use pool
                 const sprite = new PIXI.Sprite(texture);
 
@@ -1457,7 +1193,7 @@ export class WorldSimGame {
             // TODO: only for edges
             if (tiling) {
                 const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite; // FIXME: why as?
-                const texture: PIXI.Texture = this.getTextureForObject(cellObject);
+                const texture: PIXI.Texture = this.textureRegistry.getTextureForObject(cellObject);
 
                 // Redraw tiling
                 if (sprite && sprite.texture !== texture) {

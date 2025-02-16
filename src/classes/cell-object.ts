@@ -20,6 +20,12 @@ export class ObjectTree {
     };
 }
 
+export class ObjectTiling {
+    meta: {
+        tile: number
+    };
+}
+
 export class CellObjectMove extends CellObject {
     action: string;
 }

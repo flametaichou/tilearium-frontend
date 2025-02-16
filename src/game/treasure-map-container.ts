@@ -58,7 +58,7 @@ export class TreasureMapContainer {
             const cell: WorldCell = game.treasureMap.cells.get(key);
 
             const textureName = cell.cellType.toLowerCase();
-            const texture = game.getTexture(textureName);
+            const texture = game.textureRegistry.getTexture(textureName);
             const sprite = new PIXI.Sprite(texture);
 
             sprite.x = p.x * cellSize;
@@ -78,7 +78,7 @@ export class TreasureMapContainer {
                 continue;
             }
 
-            const texture = game.getTextureForObject(cellObject);
+            const texture = game.textureRegistry.getTextureForObject(cellObject);
             const sprite = new PIXI.Sprite(texture);
 
             if (cellObject.cellObjectType === 'TREE') {

@@ -1,0 +1,194 @@
+[
+    {
+        "name": "grass",
+        "path": "cell"
+    },
+    {
+        "name": "dirt",
+        "path": "cell"
+    },
+    {
+        "name": "sand",
+        "path": "cell"
+    },
+    {
+        "name": "water",
+        "path": "cell"
+    },
+    {
+        "name": "ice",
+        "path": "cell"
+    },
+    {
+        "name": "snow",
+        "path": "cell"
+    },
+    {
+        "name": "leaves",
+        "path": "cell"
+    },
+    {
+        "name": "tree",
+        "path": "object"
+    },
+    {
+        "name": "tree_cactus",
+        "path": "object"
+    },
+    {
+        "name": "tree_maple",
+        "path": "object"
+    },
+    {
+        "name": "tree_oak",
+        "path": "object"
+    },
+    {
+        "name": "tree_palm",
+        "path": "object"
+    },
+    {
+        "name": "tree_pine",
+        "path": "object"
+    },
+    {
+        "name": "tree_poplar",
+        "path": "object"
+    },
+    {
+        "name": "tree_spruce",
+        "path": "object"
+    },
+    {
+        "name": "tree_willow",
+        "path": "object"
+    },
+    {
+        "name": "dead_tree",
+        "path": "object"
+    },
+    {
+        "name": "dead_tree_tree",
+        "path": "object"
+    },
+    {
+        "name": "dead_tree_log",
+        "path": "object"
+    },
+    {
+        "name": "dead_tree_stump",
+        "path": "object"
+    },
+    {
+        "name": "bush",
+        "path": "object"
+    },
+    {
+        "name": "grass_tall_grass",
+        "path": "object"
+    },
+    {
+        "name": "flower_daisy",
+        "path": "object"
+    },
+    {
+        "name": "mushroom_brown",
+        "path": "object"
+    },
+    {
+        "name": "mushroom_red",
+        "path": "object"
+    },
+    {
+        "name": "water_plant_water_lily",
+        "path": "object"
+    },
+    {
+        "name": "water_plant_cattail",
+        "path": "object"
+    },
+    {
+        "name": "rock",
+        "path": "object"
+    },
+    {
+        "name": "storage",
+        "path": "object"
+    },
+    {
+        "name": "house",
+        "path": "object",
+        "tiled": true,
+        "tilesMapping": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 6,
+            "7": 0,
+            "8": 0,
+            "9": 9,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 0
+        }
+    },
+    {
+        "name": "pit",
+        "path": "object"
+    },
+    {
+        "name": "mark"
+    },
+    {
+        "name": "wall",
+        "path": "object",
+        "tiled": true,
+        "tilesMapping": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 6,
+            "7": 0,
+            "8": 0,
+            "9": 9,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 0
+        }
+    },
+    {
+        "name": "road",
+        "path": "object",
+        "tiled": true
+    },
+    {
+        "name": "entity_villager",
+        "path": "entity"
+    },
+    {
+        "name": "entity_player",
+        "path": "entity"
+    },
+    {
+        "name": "entity_item",
+        "path": "entity"
+    },
+    {
+        "name": "empty"
+    },
+    {
+        "name": "path"
+    }
+]

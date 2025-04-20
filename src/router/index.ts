@@ -13,24 +13,41 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Main',
         component: Main,
         meta: {
-            authorize: true
+            authorize: false
         },
         children: [
             {
-                path: '/',
-                name: 'Home',
+                path: '/worlds',
+                name: 'Worlds',
                 component: Home
             },
             {
-                path: '/about',
+                path: '/',
                 name: 'About',
                 // route level code-splitting
                 // this generates a separate chunk (about.[hash].js) for this route
                 // which is lazy-loaded when the route is visited.
                 component: () => import(/* webpackChunkName: "about" */ '../views/TheAbout.vue')
+            },
+            {
+                path: '/auth',
+                name: 'AuthCallback',
+                component: TheCallback,
+                meta: {
+                    authorize: false
+                }
+            },
+            {
+                path: '/auth-error',
+                name: 'AuthCallbackError',
+                component: TheCallbackError,
+                meta: {
+                    authorize: false
+                }
             }
         ]
     },
+    /*
     {
         path: '/login',
         name: 'Login',
@@ -39,24 +56,9 @@ const routes: Array<RouteRecordRaw> = [
             authorize: false
         }
     },
+    */
     {
-        path: '/auth',
-        name: 'AuthCallback',
-        component: TheCallback,
-        meta: {
-            authorize: false
-        }
-    },
-    {
-        path: '/auth-error',
-        name: 'AuthCallbackError',
-        component: TheCallbackError,
-        meta: {
-            authorize: false
-        }
-    },
-    {
-        path: '/game/:worldId',
+        path: '/game/:gameId',
         name: 'Game',
         component: Game,
         meta: {

@@ -1,5 +1,12 @@
 <template>
-    <h1>Auth in progress...</h1>
+    <div class="callback">
+        <div class="loader">
+            <div class="loader__line"></div>
+        </div>
+        <!--
+        <h1>Auth in progress...</h1>
+        -->
+    </div>
 </template>
 
 <script lang="ts">
@@ -34,6 +41,8 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
+    .callback {
+        height: 100%;
+    }
 </style>

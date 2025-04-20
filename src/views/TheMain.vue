@@ -7,13 +7,7 @@
 
             <div class="main__spacer"></div>
 
-            <div class="account">
-                <img class="account__avatar" :src="user?.profile?.picture">
-                <span class="account__name text-white" >
-                    {{ user?.profile?.name }}
-                </span>
-                <a class="account__logout text-white" @click="logOut()" href="#">Log out</a>
-            </div>
+            <div></div>
 
             <!--
             <router-link to="/">Home</router-link>
@@ -39,38 +33,42 @@ export default defineComponent({
     name: 'TheMain',
 
     data: () => ({
+        /*
         userManager: undefined as UserManager,
         store: undefined as Store<{ account: User }>
+        */
     }),
 
     computed: {
+        /*
         user: function (): User {
             return this.store?.state.account;
         }
+        */
     },
 
     created(): void {
+        /*
         this.userManager = inject('userManager');
         this.store = useStore(); 
+        */
     },
 
     methods: {
+        /*
         logOut(): void {
-            /*
-            this.userManager.signoutRedirect().then(() => {
-            });
-            */
             this.store.dispatch('authorize', undefined);
         }
+        */
     }
 });
 </script>
 
 <style scoped lang="scss">
     .main {
+        height: 100%;
         display: flex;
         flex-direction: column;
-        min-height: 100vh;
 
         &__header {
             display: flex;
@@ -90,26 +88,6 @@ export default defineComponent({
 
         &__spacer {
             flex: 1 0;
-        }
-    }
-
-    .account {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-
-        &__avatar {
-            height: 32px;
-            border-radius: 50%;
-        }
-
-        &__name {
-             
-        }
-
-        &__logout {
-            font-weight: bold;
-
         }
     }
 </style>

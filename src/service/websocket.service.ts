@@ -79,15 +79,10 @@ class WebSocketService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subscribeTo(path: string, callbackFunction: (arg: any) => void, weak: boolean) {
+    subscribe(path: string, callbackFunction: (arg: any) => void, weak: boolean) {
+        path = path.replace(':sessionId', this.sessionId);
+        
         this.stompClient.subscribe(path, (val) => {
-            callbackFunction(JSON.parse(val.body));
-        });
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subscribe(callbackFunction: (arg: any) => void, weak: boolean) {
-        this.stompClient.subscribe(`/game/user/${this.sessionId}/queue`, (val) => {
             callbackFunction(JSON.parse(val.body));
         });
     }

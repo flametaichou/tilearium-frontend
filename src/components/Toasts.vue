@@ -8,7 +8,7 @@
                 v-for="(toast, index) in toasts" 
                 :key="'toast-' + index"
             >
-                <strong>Info</strong>
+                <strong>{{ toast.type.toUpperCase() }}</strong>
                 <div>
                     {{ toast.message }}
                 </div>
@@ -23,7 +23,7 @@ import { defineComponent } from 'vue';
 import { Store, useStore } from 'vuex';
 
 export default defineComponent({
-    name: 'WorldCreationDialog',
+    name: 'ToastsContainer',
 
     data: () => ({
         store: undefined as Store<{ toasts: Toast[] }>

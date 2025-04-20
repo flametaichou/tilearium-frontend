@@ -14,7 +14,7 @@ function getAccount(): User {
         }
     }
 
-    return undefined;
+    return null;
 }
 
 export default createStore({

@@ -4,11 +4,9 @@
             <div class="app__bg"></div>
             <router-view/>
         </div>
-        <!--
         <div class="app__right">
-            News
+            <the-login></the-login>
         </div>
-        -->
         <toasts/>
     </div>
 </template>
@@ -16,11 +14,13 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import Toasts from './components/Toasts.vue';
+import TheLogin from './views/TheLogin.vue';
 
 export default defineComponent({
     name: 'App',
     components: {
-        Toasts
+        Toasts,
+        TheLogin
     }
 });
 </script>
@@ -40,8 +40,12 @@ export default defineComponent({
         text-shadow: 1px 1px 2px var(--black);
     }
 
+    .sidebar {
+    }
+
     .app {
         display: flex;
+        height: 100vh;
 
         &__bg {
             z-index: -1;
@@ -68,8 +72,9 @@ export default defineComponent({
             z-index: 1;
             max-width: 500px;
             min-width: 400px;
-            z-index: 1;
             background-color: var(--white);
+            padding: 10px;
+            // TODO: animated removal
         }
     }
 </style>

@@ -1,19 +1,10 @@
 <template>
-    <div class="home">
+    <div class="worlds">
         <div v-if="loading" class="loader">
             <div class="loader__line"></div>
         </div>
 
-        <Teleport to="body">
-            <world-creation-modal v-if="creationDialogOpen" @submit="creationDialogOpen = false"></world-creation-modal>
-        </Teleport>
-
-        <button class="home__card primary block" @click="creationDialogOpen = true">
-            <span class="icon plus white mr-1"></span>
-            Create a new game
-        </button>
-
-        <div v-for="game in games" :key="game.id" class="home__card card card--hover">
+        <div v-for="game in games" :key="game.id" class="worlds__card card card--hover">
             <div class="card__title">
                 {{ game.name }}
             </div>
@@ -31,21 +22,15 @@
 <script lang="ts">
 import { worldApi } from '@/api/world.api';
 import { World } from '@/classes/world';
-import WorldCreationModal from '@/components/WorldCreationModal.vue';
 import { dialogService } from '@/service/dialog.service';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-    name: 'TheMain',
-
-    components: {
-        WorldCreationModal
-    },
+    name: 'TheWorlds',
 
     data: () => ({
         games: [] as World[],
-        loading: false as boolean,
-        creationDialogOpen: false as boolean
+        loading: false as boolean
     }),
 
     computed: {
@@ -79,7 +64,7 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-    .home {
+    .worlds {
         display: grid;
         //grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
         gap: 1em;

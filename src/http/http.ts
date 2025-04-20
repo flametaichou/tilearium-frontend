@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import store from '@/store';
 import router from '@/router';
 import { User } from 'oidc-client-ts';
@@ -28,20 +28,30 @@ instance.interceptors.request.use(
 );
 
 instance.interceptors.response.use(
-    (response) => {
+    (response: AxiosResponse) => {
         return response;
     },
-    (error) => {
+    (error: AxiosError) => {
         if (!error.config) {
             dialogService.toastError('Error in request');
 
-        } else if (!error.response || error.response.status === 401 || error.response.data.status === 401) {
-            dialogService.toastError('Unauthorized error: ' + getErrorMessage(error));
-            store.dispatch('authorize', undefined);
-            router.push('/login');
+        } else if (!error.response) {
+            dialogService.toastError('The server is not responding');
 
-        } else if (error.response.status === 403 || error.response.data.status === 403) {
-            dialogService.toastError('You do not have permission to do this');
+        } else {
+            const code = error.response ? error.response.status : 503;
+
+            switch (code) {
+                case 401:
+                    dialogService.toastError('Unauthorized error: ' + getErrorMessage(error));
+                    store.dispatch('authorize', undefined);
+                    router.push('/');
+                    break;
+                case 403:
+                    dialogService.toastError('You do not have permission to do this');
+                    break;
+
+            }
         }
 
         return Promise.reject(error);

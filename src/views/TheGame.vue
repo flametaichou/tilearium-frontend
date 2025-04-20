@@ -1,25 +1,49 @@
 <template>
     <div class="game">
-        <world-map :id="worldId"></world-map>
+        <div :id="'game-' + gameId"></div>
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import WorldMap from '@/components/WorldMap.vue'; // @ is an alias to /src
+import { WorldSimGame } from '@/game/game';
+
+// Don't make it reactive, it will impact performance a lot
+let game: WorldSimGame = null;
 
 export default defineComponent({
     name: 'TheHome',
-    components: {
-        WorldMap
+
+    /*
+    props: {
+        id: {
+            type: String,
+            required: true
+        }
     },
+    */
 
     data: () => ({
-        worldId: null as string
+        gameId: null as string
     }),
 
+    computed: {
+    },
+
     created(): void {
-        this.worldId = this.$route.params.worldId.toString();
+        this.gameId = this.$route.params.gameId.toString();
+    },
+
+    async mounted() {
+        game = new WorldSimGame(document.getElementById('game-' + this.gameId) as HTMLDivElement, this.gameId);
+        game.init();
+    },
+
+    beforeUnmount(): void {
+        game.stop();
+    },
+
+    methods: {
     }
 });
 </script>

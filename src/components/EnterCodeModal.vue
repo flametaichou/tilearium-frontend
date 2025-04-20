@@ -5,21 +5,13 @@
 
         <div class="card__content">
             <div>
-                <label>Name</label>
-                <input type="text" v-model="world.name">
-            </div>
-            <div>
-                <label>Size</label>
-                <input type="number" v-model="world.size">
-            </div>
-            <div>
-                <label>Timer</label>
-                <input type="number" v-model="world.timer">
+                <label>Code</label>
+                <input type="text" v-model="code">
             </div>
         </div>
 
         <div class="card__footer">
-            <button class="primary" :disabled="loading" @click="submit()">Create</button>
+            <button class="primary" :disabled="loading" @click="submit()">Join</button>
             <button @click="close()">Cancel</button>
         </div>
     </div>
@@ -27,15 +19,14 @@
 
 <script lang="ts">
 import { gameApi } from '@/api/game.api';
-import { WorldRequest } from '@/classes/world-request';
 import { dialogService } from '@/service/dialog.service';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-    name: 'WorldCreationDialog',
+    name: 'EnterCodeDialog',
 
     data: () => ({
-        world: {} as WorldRequest,
+        code: undefined as string,
         loading: false as boolean
     }),
 
@@ -49,12 +40,12 @@ export default defineComponent({
         submit(): void {
             this.loading = true;
 
-            gameApi.newGame()
+            gameApi.findGame(this.code)
                 .then((response) => {
                     this.$emit('submit', response.data);
                 })
                 .catch((error) => {
-                    dialogService.toastError('Error on creating new game: ' + error);
+                    dialogService.toastError('Error on finding game by code: ' + error);
                 })
                 .finally(() => {
                     this.loading = false;

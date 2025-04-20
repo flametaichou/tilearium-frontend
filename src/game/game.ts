@@ -101,6 +101,9 @@ export class WorldSimGame {
     worldHeight: number;
     zero: Point2D;
 
+    pushPath: string;
+    pullPath: string;
+
     /*
     get worldWidth(): number {
         return Math.ceil(this.app.screen.width / cellSize) + 1;
@@ -120,6 +123,10 @@ export class WorldSimGame {
 
     constructor(wrapper: HTMLDivElement, id: string) {
         this.id = id;
+
+        // TODO: separated messaging class
+        this.pushPath = '/game/' + id;
+        this.pullPath = '/game/user/:sessionId/queue';
 
         this.canvas = document.createElement('canvas');
         this.canvas.classList.add('game__canvas');
@@ -197,6 +204,14 @@ export class WorldSimGame {
     }
 
     stop(): void {
+
+        webSocketService.send(this.pushPath, {
+            type: 'CLOSE_SESSION',
+            body: {
+                
+            }
+        });
+
         this.stopped = true;
         document.removeEventListener('keydown', this.onKeyPressed);
         clearInterval(this.uiUpdateIntervalId);
@@ -272,7 +287,8 @@ export class WorldSimGame {
         this.clearPixi();
 
         webSocketService.init().then(() => {
-            webSocketService.subscribe(
+            // TODO: change path
+            webSocketService.subscribe(this.pullPath,
                 (notification: WSNotification) => {
                     switch (notification.type) {
                         case 'MAP_PART':
@@ -419,10 +435,16 @@ export class WorldSimGame {
                 false
             );
 
-            webSocketService.send('/game/map-control', {
+            webSocketService.send(this.pushPath, {
+                type: 'NEW_SESSION',
+                body: {
+
+                }
+            });
+
+            webSocketService.send(this.pushPath, {
                 type: 'SET_SETTINGS',
                 body: {
-                    worldId: this.id,
                     width: this.worldWidth,
                     height: this.worldHeight
                 }
@@ -534,7 +556,7 @@ export class WorldSimGame {
 
     sendKeyPressed(key: ActionKey, state: boolean) {
         console.log(`[Input] (${new Date().toLocaleTimeString()}) Key: ${key} state: ${state}`);
-        webSocketService.send('/game/map-control', {
+        webSocketService.send(this.pushPath, {
             type: 'KEY_STATE',
             body: {
                 action: key,
@@ -544,14 +566,15 @@ export class WorldSimGame {
     }
 
     sendMouseClicked(event: MouseEvent, zero: Point2D) {
+        // FIXME: the coordinates are wrong
         const point: Point2D = new Point2D(
-            zero.x + (event.clientX / cellSize), 
-            zero.y + (event.clientY / cellSize)
+            zero.x + (event.clientX / cellSize) + 1 , 
+            zero.y + (event.clientY / cellSize) + 1 
         );
 
         console.log(`[Input] (${new Date().toLocaleTimeString()}) Point: ${point}`);
 
-        webSocketService.send('/game/map-control', {
+        webSocketService.send(this.pushPath, {
             type: 'MOUSE_INPUT',
             body: {
                 button: 'LEFT',
@@ -563,7 +586,7 @@ export class WorldSimGame {
     sendMouseClickedOnEntity(event: MouseEvent, entity: Entity) {
         console.log(`[Input] (${new Date().toLocaleTimeString()}) Entity: ${entity}`);
 
-        webSocketService.send('/game/map-control', {
+        webSocketService.send(this.pushPath, {
             type: 'MOUSE_INPUT',
             body: {
                 button: 'LEFT',
@@ -598,7 +621,7 @@ export class WorldSimGame {
 
         //console.log(`Move ${dir}, new center is ${JSON.stringify(this.center)}, new zero is ${JSON.stringify(this.zero)}`);
 
-        $WebSocketService.send('/game/map-control', {
+        $WebSocketService.send(this.pushPath, {
             type: 'MOVE_PLAYER',
             body: {
                 direction: dir
@@ -633,7 +656,7 @@ export class WorldSimGame {
 
         console.log(`Move ${dir}, new center is ${JSON.stringify(this.center)}, new zero is ${JSON.stringify(this.zero)}`);
 
-        $WebSocketService.send('/game/map-control', {
+        $WebSocketService.send(this.pushPath, {
             type: 'MOVE_MAP',
             body: {
                 direction: dir,

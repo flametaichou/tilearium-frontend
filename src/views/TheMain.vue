@@ -1,9 +1,11 @@
 <template>
     <div class="main">
         <div class="main__header">
+            <!--
             <div class="main__logo">
                 <img src="@/assets/logo.png">
             </div>
+            -->
 
             <div class="main__spacer"></div>
 

@@ -19,6 +19,8 @@ import { LogContainer } from './log-container';
 import { ActionsContainer } from './actions-container';
 import { TreasureMapContainer } from './treasure-map-container';
 import { TextureRegistry } from './texture-registry';
+import { GameOverContainer } from './game-over-container';
+import { GameOverInfo } from './model/game-over-info';
 
 const cellSize = 32;
 const maxFps = 60;
@@ -39,6 +41,7 @@ export class WorldSimGame {
     actions: ActionsContainer;
     debug: DebugContainer;
     treasureMapContainer: TreasureMapContainer;
+    gameOverContainer: GameOverContainer;
 
     initializing: boolean;
     loading: boolean;
@@ -286,162 +289,169 @@ export class WorldSimGame {
 
         this.clearPixi();
 
-        webSocketService.init().then(() => {
-            // TODO: change path
-            webSocketService.subscribe(this.pullPath,
-                (notification: WSNotification) => {
-                    switch (notification.type) {
-                        case 'MAP_PART':
-                            const worldPart: WorldPart = notification.body as WorldPart;
+        // TODO: change path
+        webSocketService.subscribe(this.pullPath,
+            (notification: WSNotification) => {
+                switch (notification.type) {
+                    case 'MAP_PART':
+                        const worldPart: WorldPart = notification.body as WorldPart;
 
-                            this.center = worldPart.center;
-                            this.updateZero();
+                        this.center = worldPart.center;
+                        this.updateZero();
 
-                            if (!this.initialized) {
-                                this.initialized = true;
-                                this.centerPixi();
-                            }
+                        if (!this.initialized) {
+                            this.initialized = true;
+                            this.centerPixi();
+                        }
 
-                            const cells: WorldCell[] = worldPart.cells;
+                        const cells: WorldCell[] = worldPart.cells;
 
-                            this.data.cells = new Map([...this.data.cells, ...this.transformCells(cells)]);
-                            this.viewData.cells = new Map([...this.data.cells]);
+                        this.data.cells = new Map([...this.data.cells, ...this.transformCells(cells)]);
+                        this.viewData.cells = new Map([...this.data.cells]);
 
-                            const cellObjects: CellObject[] = worldPart.cellObjects;
+                        const cellObjects: CellObject[] = worldPart.cellObjects;
 
-                            this.data.cellObjects = new Map([...this.data.cellObjects, ...this.transformCellObjects(cellObjects)]);
-                            this.viewData.cellObjects = new Map([...this.data.cellObjects]);
+                        this.data.cellObjects = new Map([...this.data.cellObjects, ...this.transformCellObjects(cellObjects)]);
+                        this.viewData.cellObjects = new Map([...this.data.cellObjects]);
 
-                            const entities: EntityMove[] = worldPart.entities;
+                        const entities: EntityMove[] = worldPart.entities;
 
-                            this.data.entities = new Map([...this.data.entities, ...this.transformEntities(entities as Entity[])]);
+                        this.data.entities = new Map([...this.data.entities, ...this.transformEntities(entities as Entity[])]);
+                        this.viewData.entities = new Map([...this.data.entities]);
+
+                        /*
+                        console.log('-------------------------------------------');
+                        console.log(`Cells size: ${cells.length}`);
+                        console.log(`Objects size: ${cellObjects.length}`);
+
+                        console.log(`Container size: ${this.container.children.length}`);
+
+                        console.log(`Chunks count: ${this.chunks.size}`);
+                        for (const key of this.chunks.keys()) {
+                            console.log(`Chunk ${key} size: ${this.chunks.get(key).children.length }`);
+                        }
+
+                        console.log(`Textures count: ${this.textureRegistry.sprites.size}`);
+
+                        console.log(`Data cells count: ${this.data.cells.size}`);
+                        console.log(`Data objects count: ${this.data.cellObjects.size}`);
+                        console.log(`Data entities count: ${this.data.entities.size}`);
+
+                        console.log(`View cells count: ${this.view.cells.size}`);
+                        console.log(`View objects count: ${this.view.cellObjects.size}`);
+                        console.log(`View entities count: ${this.view.entities.size}`);
+
+                        console.log(`Keys pressed count: ${this.keysPressed.length}`);
+
+                        console.log('-------------------------------------------');
+                        */
+
+                        // 1-2ms here
+
+                        break;
+
+                    case 'ENTITY':
+                        const entityMove: EntityMove = notification.body as EntityMove;
+
+                        if (entityMove.action === 'REMOVE') {
+
+                            const sprite: PIXI.Sprite = this.view.entities.get(entityMove.id) as PIXI.Sprite;  // FIXME: why as?
+                            
+                            this.container.removeChild(sprite);
+
+                            this.data.entities.delete(entityMove.id);
+                            this.viewData.entities.delete(entityMove.id);
+                            this.view.entities.delete(entityMove.id);
+
+                        } else {
+                            // FIXME: sprites can be not removed from pixi
+                            this.data.entities = new Map([
+                                ...this.data.entities,
+                                ...this.transformEntities([entityMove as Entity])
+                            ]);
                             this.viewData.entities = new Map([...this.data.entities]);
+                        }
 
-                            /*
-                            console.log('-------------------------------------------');
-                            console.log(`Cells size: ${cells.length}`);
-                            console.log(`Objects size: ${cellObjects.length}`);
+                        break;
 
-                            console.log(`Container size: ${this.container.children.length}`);
+                    case 'CELL_OBJECT':
+                        const cellObject: CellObjectMove = notification.body as CellObjectMove;
 
-                            console.log(`Chunks count: ${this.chunks.size}`);
-                            for (const key of this.chunks.keys()) {
-                                console.log(`Chunk ${key} size: ${this.chunks.get(key).children.length }`);
-                            }
+                        if (cellObject.action === 'REMOVE') {
 
-                            console.log(`Textures count: ${this.textureRegistry.sprites.size}`);
+                            const key = this.getKey(cellObject);
+                            const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite;
+                            
+                            this.container.removeChild(sprite);
 
-                            console.log(`Data cells count: ${this.data.cells.size}`);
-                            console.log(`Data objects count: ${this.data.cellObjects.size}`);
-                            console.log(`Data entities count: ${this.data.entities.size}`);
+                            this.data.cellObjects.delete(key);
+                            this.viewData.cellObjects.delete(key);
+                            this.view.cellObjects.delete(key);
 
-                            console.log(`View cells count: ${this.view.cells.size}`);
-                            console.log(`View objects count: ${this.view.cellObjects.size}`);
-                            console.log(`View entities count: ${this.view.entities.size}`);
+                        } else {
+                            this.data.cellObjects = new Map([
+                                ...this.data.cellObjects,
+                                ...this.transformCellObjects([cellObject as CellObject])
+                            ]);
+                            this.viewData.cellObjects = new Map([...this.data.cellObjects]);
+                        }
 
-                            console.log(`Keys pressed count: ${this.keysPressed.length}`);
+                        break;
 
-                            console.log('-------------------------------------------');
-                            */
+                    case 'PATH':
+                        const pathPacket: Path = notification.body as Path;
 
-                            // 1-2ms here
+                        const path: Point2D[] = pathPacket.path;
 
-                            break;
+                        // FIXME: do not clean all effects
+                        this.data.effects =  this.transformEffects(path as Point2D[]);
+                        this.viewData.effects = new Map([...this.data.effects]);
 
-                        case 'ENTITY':
-                            const entityMove: EntityMove = notification.body as EntityMove;
+                        break;
 
-                            if (entityMove.action === 'REMOVE') {
+                    case 'LOG':
+                        const logEvent: LogEvent = notification.body as LogEvent;
 
-                                const sprite: PIXI.Sprite = this.view.entities.get(entityMove.id) as PIXI.Sprite;  // FIXME: why as?
-                                
-                                this.container.removeChild(sprite);
+                        this.log.push(`[${new Date().toLocaleDateString()}] ${logEvent.message}`);
 
-                                this.data.entities.delete(entityMove.id);
-                                this.viewData.entities.delete(entityMove.id);
-                                this.view.entities.delete(entityMove.id);
+                        if (this.log.length > 10) {
+                            this.log.slice(0, 1);
+                        }
 
-                            } else {
-                                // FIXME: sprites can be not removed from pixi
-                                this.data.entities = new Map([
-                                    ...this.data.entities,
-                                    ...this.transformEntities([entityMove as Entity])
-                                ]);
-                                this.viewData.entities = new Map([...this.data.entities]);
-                            }
+                        break;
 
-                            break;
+                    case 'TREASURE_MAP':
+                        const map: WorldPart = notification.body as WorldPart;
 
-                        case 'CELL_OBJECT':
-                            const cellObject: CellObjectMove = notification.body as CellObjectMove;
-
-                            if (cellObject.action === 'REMOVE') {
-
-                                const key = this.getKey(cellObject);
-                                const sprite: PIXI.Sprite = this.view.cellObjects.get(key) as PIXI.Sprite;
-                                
-                                this.container.removeChild(sprite);
-
-                                this.data.cellObjects.delete(key);
-                                this.viewData.cellObjects.delete(key);
-                                this.view.cellObjects.delete(key);
-
-                            } else {
-                                this.data.cellObjects = new Map([
-                                    ...this.data.cellObjects,
-                                    ...this.transformCellObjects([cellObject as CellObject])
-                                ]);
-                                this.viewData.cellObjects = new Map([...this.data.cellObjects]);
-                            }
-
-                            break;
-
-                        case 'PATH':
-                            const pathPacket: Path = notification.body as Path;
+                        this.treasureMap.cells = new Map([...this.transformCells(map.cells)]);
+                        this.treasureMap.cellObjects = new Map([...this.transformCellObjects(map.cellObjects)]);
     
-                            const path: Point2D[] = pathPacket.path;
+                        this.treasureMapContainer = new TreasureMapContainer(this);
+
+                        break;
+
+                    case 'GAME_OVER':
+                        const info: GameOverInfo = notification.body as GameOverInfo;
     
-                            // FIXME: do not clean all effects
-                            this.data.effects =  this.transformEffects(path as Point2D[]);
-                            this.viewData.effects = new Map([...this.data.effects]);
+                        this.gameOverContainer = new GameOverContainer(this, { info: info });
 
-                            break;
+                        break;
 
-                        case 'LOG':
-                            const logEvent: LogEvent = notification.body as LogEvent;
+                    default:
+                        dialogService.toastError('UNKNOWN NOTIFICATION: ' + notification.type);
+                }
+            },
+            false
+        );
 
-                            this.log.push(`[${new Date().toLocaleDateString()}] ${logEvent.message}`);
-
-                            if (this.log.length > 10) {
-                                this.log.slice(0, 1);
-                            }
-    
-                            break;
-
-                        case 'TREASURE_MAP':
-                            const map: WorldPart = notification.body as WorldPart;
-
-                            this.treasureMap.cells = new Map([...this.transformCells(map.cells)]);
-                            this.treasureMap.cellObjects = new Map([...this.transformCellObjects(map.cellObjects)]);
-        
-                            this.treasureMapContainer = new TreasureMapContainer(this);
-
-                            break;
-
-                        default:
-                            dialogService.toastError('UNKNOWN NOTIFICATION: ' + notification.type);
-                    }
-                },
-                false
-            );
-
+        try {
             webSocketService.send(this.pushPath, {
                 type: 'NEW_SESSION',
                 body: {
-
+    
                 }
             });
-
+    
             webSocketService.send(this.pushPath, {
                 type: 'SET_SETTINGS',
                 body: {
@@ -450,43 +460,97 @@ export class WorldSimGame {
                 }
             });
 
-            this.app.ticker.maxFPS = maxFps;
-            this.app.ticker.minFPS = 0;
+        } catch (e) {
+            dialogService.toastError(`Can't connect to game: ${e.toString()}`);
+            this.exit();
+        }
 
-            this.fps = 0;
-            this.app.ticker.add((delta) => {
-                const newFps = Math.round(this.app.ticker.FPS);
+        this.app.ticker.maxFPS = maxFps;
+        this.app.ticker.minFPS = 0;
 
-                if (this.fps < newFps) {
-                    this.fps++;
+        this.fps = 0;
+        this.app.ticker.add((delta) => {
+            const newFps = Math.round(this.app.ticker.FPS);
 
-                } else if (this.fps > newFps) {
-                    this.fps = newFps;
-                }
+            if (this.fps < newFps) {
+                this.fps++;
 
-            }, {}, -100);
+            } else if (this.fps > newFps) {
+                this.fps = newFps;
+            }
 
-            this.app.ticker.add((delta) => {
-                this.drawAll();
-                this.redrawAll();
-                this.clearAll();
-            }, {}, -100);
+        }, {}, -100);
 
-            this.log = [];
+        this.app.ticker.add((delta) => {
+            this.drawAll();
+            this.redrawAll();
+            this.clearAll();
+        }, {}, -100);
 
-            //this.render();
+        this.log = [];
 
-            this.uiUpdateIntervalId = setInterval(() => {
-                this.debug.update();
-                this.logContainer.update();
-            }, 300);
-        });
+        //this.render();
+
+        this.uiUpdateIntervalId = setInterval(() => {
+            this.debug.update();
+            this.logContainer.update();
+        }, 300);
 
         // TODO: check bind
         document.addEventListener('keydown', this.onKeyPressed.bind(this));
         document.addEventListener('keyup', this.onKeyReleased.bind(this));
 
+        let resizing = false;
+
+        window.addEventListener('resize', () => {
+        });
+    
+        const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+            window.requestAnimationFrame(() => {
+                if (!Array.isArray(entries) || !entries.length) {
+                    return;
+                }
+
+                if (!resizing) {
+                    this.clearPixi();
+                    // TODO: re-initialize app?
+                    this.app.renderer.resize(
+                        this.canvas.clientWidth,
+                        this.canvas.clientHeight
+                    );
+
+                    this.container.x = this.app.screen.width / 2;
+                    this.container.y = this.app.screen.height / 2;
+
+                    this.updateWorldSize();
+                    this.updateZero();
+
+                    webSocketService.send(this.pushPath, {
+                        type: 'SET_SETTINGS',
+                        body: {
+                            width: this.worldWidth,
+                            height: this.worldHeight
+                        }
+                    });
+    
+                    setTimeout(() => {
+                        resizing = false;
+        
+                    }, 2000);
+                }
+    
+                resizing = true;
+            });
+        });
+
+        resizeObserver.observe(this.wrapper);
+
         this.initializing = false;
+    }
+
+    exit() {
+        this.stop();
+        window.location.pathname = '';
     }
 
     updateWorldSize() {

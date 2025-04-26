@@ -21,10 +21,17 @@ export class ActionsContainer {
 
         this.actions = [
             { 
+                name: 'Exit', 
+                icon: '/actions/exit.png', 
+                click: () => {
+                    game.exit();
+                }
+            },
+            { 
                 name: 'Dig', 
                 icon: '/actions/dig.png', 
                 click: () => {
-                    webSocketService.send('/game/map-control', {
+                    webSocketService.send(this.game.pushPath, {
                         type: 'DIG',
                         body: {
                         }
@@ -35,7 +42,7 @@ export class ActionsContainer {
                 name: 'Open Inventory', 
                 icon: '/actions/inventory.png', 
                 click: () => {
-                    webSocketService.send('/game/map-control', {
+                    webSocketService.send(this.game.pushPath, {
                         type: 'ACTION',
                         body: {
                             type: 'OPEN_INVENTORY'
@@ -47,7 +54,7 @@ export class ActionsContainer {
                 name: 'Show Map', 
                 icon: '/actions/map.png', 
                 click: () => {
-                    webSocketService.send('/game/map-control', {
+                    webSocketService.send(this.game.pushPath, {
                         type: 'SHOW_MAP',
                         body: {
                         }

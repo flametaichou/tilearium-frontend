@@ -5,6 +5,8 @@ import { Point2D } from '@/classes/point2d';
 import { WorldCell } from '@/classes/world-cell';
 import { CellObject, ObjectTree } from '@/classes/cell-object';
 
+const cellSize = 32;
+
 export class TreasureMapContainer {
 
     game: WorldSimGame;
@@ -15,14 +17,35 @@ export class TreasureMapContainer {
         this.game = game;
 
         this.elem = document.createElement('div');
-        this.elem.classList.add('game__dialog');
+        this.elem.classList.add('dialog');
+        this.elem.classList.add('card');
+        this.elem.classList.add('card--shadow');
         this.game.wrapper.appendChild(this.elem);
+
+        const header = document.createElement('div');
+
+        header.classList.add('card__title');
+        header.innerHTML = '<h2>Treasure map</h2>';
+        this.elem.appendChild(header);
+
+        const content = document.createElement('div');
+
+        content.classList.add('dialog__content');
+        content.classList.add('card__content');
+        this.elem.appendChild(content);
 
         const canvas = document.createElement('canvas');
 
         canvas.classList.add('game__canvas');
         canvas.classList.add('game__treasure-map');
-        this.elem.appendChild(canvas);
+        canvas.style.width = cellSize * 30 + 'px';
+        content.appendChild(canvas);
+
+        const actions = document.createElement('div');
+
+        actions.classList.add('dialog__actions');
+        actions.classList.add('card__footer');
+        this.elem.appendChild(actions);
 
         const close = document.createElement('button');
 
@@ -33,9 +56,7 @@ export class TreasureMapContainer {
             this.game.treasureMapContainer = undefined;
         };
 
-        this.elem.appendChild(close);
-
-        const cellSize = 32;
+        actions.appendChild(close);
 
         const app = new PIXI.Application({
             width: canvas.clientWidth,

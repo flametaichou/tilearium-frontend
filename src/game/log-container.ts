@@ -21,6 +21,7 @@ export class LogContainer {
 
             messageElem.textContent = message;
             this.elem.appendChild(messageElem);
+            this.elem.scrollTo(0, this.elem.scrollHeight);
         }
     }
 }

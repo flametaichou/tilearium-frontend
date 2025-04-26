@@ -2,6 +2,7 @@
     &__wrapper {
         width: 100%;
         height: 100%;
+        overflow-y: hidden;
 
         //background-color: black;
         background: radial-gradient(circle at bottom, #00212f 0, black 100%);
@@ -18,21 +19,6 @@
 
     &__treasure-map {
         filter: sepia(1);
-    }
-
-    &__dialog {
-        position: absolute;
-        background-color: white;
-        padding: 10px;
-        width: 80%;
-        height: 80%;
-        //margin-left: auto;
-        //margin-right: auto;
-        //margin-top: auto;
-        //margin-bottom: auto;
-
-        top: 10%;
-        left: 10%;
     }
 
     &__fps {
@@ -84,5 +70,44 @@
             width: 63px;
             cursor: pointer;
         }
+    }
+}
+
+.dialog {
+    position: absolute;
+    //background-color: white;
+    //padding: 10px;
+    width: 80%;
+    height: 80%;
+    //margin-left: auto;
+    //margin-right: auto;
+    //margin-top: auto;
+    //margin-bottom: auto;
+
+    top: 10%;
+    left: 10%;
+    display: flex;
+    flex-direction: column;
+
+    &__content {
+        flex: 1 0;
+        display: flex;
+        flex-direction: column;
+        //justify-content: center;
+        align-items: center;
+        //padding: 20px 0;
+
+        table {
+            width: 100%;
+        }
+
+        canvas {
+
+        }
+    }
+
+    &__actions {
+        //flex: 0 0;
+        text-align: center;
     }
 }

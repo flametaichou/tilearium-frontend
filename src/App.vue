@@ -4,25 +4,26 @@
             <div class="app__bg"></div>
             <router-view/>
         </div>
-        <div class="app__right">
+        <div class="app__right"  :class="{ 'app__right--hidden' : hidden }">
             <the-login></the-login>
         </div>
         <toasts/>
     </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import Toasts from './components/Toasts.vue';
 import TheLogin from './views/TheLogin.vue';
+import router from './router';
+import { webSocketService } from './service/websocket.service';
 
-export default defineComponent({
-    name: 'App',
-    components: {
-        Toasts,
-        TheLogin
-    }
+const hidden = computed(() => router.currentRoute.value.path.includes('/game'));
+
+webSocketService.init().then(() => {
+    
 });
+
 </script>
 
 <style lang="scss">
@@ -46,6 +47,7 @@ export default defineComponent({
     .app {
         display: flex;
         height: 100vh;
+        overflow-y: auto;
 
         &__bg {
             z-index: -1;
@@ -66,15 +68,23 @@ export default defineComponent({
             position: relative;
             flex: 1 0;
             background-color: var(--gray4);
+            overflow-y: auto;
         }
 
         &__right {
             z-index: 1;
             max-width: 500px;
-            min-width: 400px;
+            //min-width: 400px;
             background-color: var(--white);
-            padding: 10px;
-            // TODO: animated removal
+            transition: max-width ease 0.3s;
+            display: flex;
+
+            &--hidden {
+                max-width: 0;
+                min-width: 0;
+                overflow-x: hidden;
+                //transform: translateX(100%);
+            }
         }
     }
 </style>

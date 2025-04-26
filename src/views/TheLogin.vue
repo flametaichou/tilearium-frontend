@@ -1,9 +1,14 @@
 <template>
     <div class="sidebar">
-        <div>
+        <div class="header">
+
+            <div class="header__logo">
+                <img src="@/assets/logo.png">
+            </div>
+
             <div v-if="user" class="account">
                 <img class="account__avatar" :src="user?.profile?.picture">
-                <span class="account__name text-white" >
+                <span class="account__name" >
                     {{ user?.profile?.name }}
                 </span>
                 <!--
@@ -26,21 +31,21 @@
         <Teleport to="body">
             <world-creation-modal 
                 v-if="creationDialogOpen" 
-                @submit="(gameId: string) => { creationDialogOpen = false; joinGame(gameId); }"
+                @submit="creationDialogCallback"
             ></world-creation-modal>
 
             <enter-code-modal 
                 v-if="enterCodeDialogOpen" 
-                @submit="(gameId: string) => { enterCodeDialogOpen = false; joinGame(gameId) }"
+                @submit="enterCodeDialogCallback"
             ></enter-code-modal >
         </Teleport>
 
-        <div>
-            <button class="primary" :disabled="!user" @click="newGame()">
+        <div class="buttons">
+            <button class="primary block" :disabled="!user" @click="newGame()">
                 <span class="icon plus white mr-1"></span>
                 Create a new game
             </button>
-            <button class="primary" :disabled="!user" @click="enterCode()">
+            <button class="primary block" :disabled="!user" @click="enterCode()">
                 Join game
             </button>
         </div>
@@ -74,6 +79,22 @@ const user = computed(() => store.state.account);
 
 const creationDialogOpen = ref(false);
 const enterCodeDialogOpen = ref(false);
+
+const creationDialogCallback = (gameId?: string) => { 
+    creationDialogOpen.value = false; 
+
+    if (gameId) {
+        joinGame(gameId); 
+    }
+};
+
+const enterCodeDialogCallback = (gameId?: string) => { 
+    enterCodeDialogOpen.value = false; 
+
+    if (gameId) {
+        joinGame(gameId); 
+    }
+};
 
 const loading = ref(false);
 const unfinishedGameId = ref(null);
@@ -131,6 +152,7 @@ function fetchGameData(): void {
 
 async function play(code?: string): Promise<void> {
     let gameId = undefined;
+    let error = undefined;
 
     if (!code && unfinishedGameId.value) {
         gameId = unfinishedGameId.value;
@@ -140,14 +162,19 @@ async function play(code?: string): Promise<void> {
             .then((response) => {
                 return response.data;
             })
-            .catch((error) => {
-                dialogService.toastError('Error on finding game: ' + error);
+            .catch((e) => {
+                error = 'Error on finding game: ' + e;
             })
             .finally(() => {
             });
     }
 
-    joinGame(gameId);
+    if (gameId) {
+        joinGame(gameId);
+
+    } else {
+        dialogService.toastError(`Can not find a game to play (${error})`);
+    }
 }
 
 function newGame(): void {
@@ -178,20 +205,39 @@ function logOut(): void {
 </script>
 
 <style scoped lang="scss">
+
 .sidebar {
+    padding: 12px;
+
     display: flex;
     flex-direction: column;
-    height: 100%;
+    gap: 12px;
 
     &__spacer {
         flex: 1 0;
     }
 }
 
+.header {
+    display: flex;
+    gap: 12px;
+
+    &__logo {
+        img {
+            height: 32px;
+        }
+    }
+}
+
+.buttons {
+    display: flex;
+    gap: 12px;
+}
+
 .account {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 
     &__avatar {
         height: 32px;
@@ -204,7 +250,6 @@ function logOut(): void {
 
     &__logout {
         font-weight: bold;
-
     }
 }
 </style>

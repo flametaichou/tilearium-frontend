@@ -70,12 +70,11 @@ import EnterCodeModal from '@/components/EnterCodeModal.vue';
 import { authApi } from '@/api/auth.api';
 import { gameApi } from '@/api/game.api';
 import { dialogService } from '@/service/dialog.service';
+import { AxiosError } from 'axios';
 
 const userManager: UserManager = inject('userManager');
 const router = useRouter();
 const store = useStore();
-
-const user = computed(() => store.state.account);
 
 const creationDialogOpen = ref(false);
 const enterCodeDialogOpen = ref(false);
@@ -98,42 +97,31 @@ const enterCodeDialogCallback = (gameId?: string) => {
 
 const loading = ref(false);
 const unfinishedGameId = ref(null);
+const user = ref(null);
 
 onMounted(() => {
-    /*
-    const user = store.state.account;
+    user.value = store.state.account;
 
-    if (user) {
-        router.push('/');
+    if (user.value) {
+        authApi.check()
+            .then(() => {
+                console.log('User is authenticated');
+                fetchGameData();
+            })
+            .catch((error: AxiosError) => {
+                dialogService.toastError('Error on checking user authentication: ' + error);
+
+                if (error.response?.status === 401) {
+                    user.value = null;
+                    userManager.signinSilent();
+                }  
+
+                //dialogService.toastError('Unauthorized error: ' + getErrorMessage(error));
+                //store.dispatch('authorize', undefined);
+                //router.push('/');
+            });
     }
-    */
 
-    /*
-    userManager.startSilentRenew();    
-
-    userManager.signinSilentCallback()
-        .then(() => {
-            //router.push('/');
-            //alert('Successfully logged id');
-        })
-        .catch((error) => {
-            console.error(error);
-        });
-    */
-
-    authApi.check()
-        .then(() => {
-            console.log('User is authenticated');
-            fetchGameData();
-        })
-        .catch((error) => {
-            // TODO: refresh
-
-            dialogService.toastError('Error on checking user authentication: ' + error);
-            //dialogService.toastError('Unauthorized error: ' + getErrorMessage(error));
-            //store.dispatch('authorize', undefined);
-            //router.push('/');
-        });
 });
 
 function fetchGameData(): void {

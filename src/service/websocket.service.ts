@@ -2,9 +2,10 @@ import SockJS from 'sockjs-client';
 import store from '@/store';
 import Stomp, { Client } from 'webstomp-client';
 import { User } from 'oidc-client-ts';
+import { dialogService } from './dialog.service';
 
 const debugMode = false;
-const reconnectDelay = 3000;
+const reconnectDelay = 10000;
 
 class WebSocketService {
 
@@ -67,6 +68,8 @@ class WebSocketService {
                         console.log('Reconnecting...');
                         console.log('Wait for' + reconnectDelay / 1000 + 'sec');
                     }
+
+                    dialogService.toastError(`Can not establish connection with server. Retry in ${reconnectDelay / 1000} seconds...`);
 
                     return setTimeout(() => {
 

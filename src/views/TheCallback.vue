@@ -33,6 +33,18 @@ export default defineComponent({
             .catch((e) => {
                 dialogService.toastError(e);
             });
+
+        /*
+        userManager.signinSilentCallback()
+            .then(() => {
+                //router.push('/');
+                //alert('Successfully logged id');
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+        */
+        //router.push('/');
     },
 
     methods: {

@@ -554,8 +554,9 @@ export class WorldSimGame {
     }
 
     updateWorldSize() {
-        this.worldWidth = Math.ceil(this.app.screen.width / cellSize) + 1;
-        this.worldHeight = Math.ceil(this.app.screen.height / cellSize) + 1;
+        // + 2 are two additional cells to be preloaded on sides (so the player can not see the edge)
+        this.worldWidth = Math.ceil(this.app.screen.width / cellSize) + 2;
+        this.worldHeight = Math.ceil(this.app.screen.height / cellSize) + 2;
     }
 
     updateZero() {
@@ -801,7 +802,9 @@ export class WorldSimGame {
         for (let counter = 0; counter < path.length; counter++) {
             const p: Point2D = path[counter];
 
-            map.set(this.getKey(p), 'path');
+            const sprite = counter === (path.length - 1) ? 'target' : 'path';
+            
+            map.set(this.getKey(p), sprite);
         }
         
         return map;
@@ -1235,7 +1238,7 @@ export class WorldSimGame {
             const rendered = this.view.effects.has(key);
 
             if (!rendered) {
-                const texture = this.textureRegistry.getTexture('path');
+                const texture = this.textureRegistry.getTexture(effect);
                 // TODO: use pool
                 const sprite = new PIXI.Sprite(texture);
 

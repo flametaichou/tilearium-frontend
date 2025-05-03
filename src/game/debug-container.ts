@@ -1,23 +1,13 @@
 import { WorldSimGame } from './game';
+import { UiContainer } from './ui-container';
 
-export class DebugContainer {
-
-    game: WorldSimGame;
-
-    //id: string;
-    wrapper: HTMLDivElement;
-    elem: HTMLDivElement;
+export class DebugContainer extends UiContainer {
 
     fpsElem: HTMLDivElement;
     centerElem: HTMLDivElement;
 
-    constructor(game: WorldSimGame) {
-        this.game = game;
-
-        //this.id = game.id;
-        this.wrapper = game.wrapper as HTMLDivElement;
-        this.elem = document.createElement('div');
-        this.wrapper.appendChild(this.elem);
+    constructor(game: WorldSimGame, params?: { info: object }) {
+        super(game, params);
 
         this.elem.classList.add('game__debug');
 

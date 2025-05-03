@@ -1,52 +1,27 @@
 import { WorldSimGame } from './game';
 import { GameOverInfo } from './model/game-over-info';
+import { ModalContainer } from './modal-container';
 
-export class GameOverContainer {
-
-    game: WorldSimGame;
-
-    elem: HTMLDivElement;
+export class GameOverContainer extends ModalContainer {
 
     constructor(game: WorldSimGame, params: { info: GameOverInfo }) {
-        this.game = game;
+        super(game, params);
 
-        this.elem = document.createElement('div');
-        this.elem.classList.add('dialog');
-        this.elem.classList.add('card');
-        this.elem.classList.add('card--shadow');
-        this.game.wrapper.appendChild(this.elem);
-
-        const header = document.createElement('div');
-
-        header.classList.add('card__title');
-        header.innerHTML = '<h2>The game is ended!</h2>';
-        this.elem.appendChild(header);
-
-        const content = document.createElement('div');
-
-        content.classList.add('dialog__content');
-        content.classList.add('card__content');
-        this.elem.appendChild(content);
-
-        const actions = document.createElement('div');
-
-        actions.classList.add('dialog__actions');
-        actions.classList.add('card__footer');
-        this.elem.appendChild(actions);
+        this.header.innerHTML = '<h2>The game is ended!</h2>';
 
         const close = document.createElement('button');
 
         close.classList.add('secondary');
         close.textContent = 'Exit';
         close.onclick = () => {
-            game.exit()
+            game.exit();
             //this.game.wrapper.removeChild(this.elem);
             //this.game.gameOverContainer = undefined;
         };
 
-        actions.appendChild(close);
+        this.actions.appendChild(close);
 
-        content.innerHTML = `
+        this.content.innerHTML = `
         <h4>Here are the results:</h4>
         <table>
         <thead>

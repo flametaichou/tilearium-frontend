@@ -1,10 +1,8 @@
 import { webSocketService } from '@/service/websocket.service';
 import { WorldSimGame } from './game';
+import { UiContainer } from './ui-container';
 
-export class ActionsContainer {
-
-    game: WorldSimGame;
-    elem: HTMLDivElement;
+export class ActionsContainer extends UiContainer {
 
     actions: {
         name: string,
@@ -12,12 +10,40 @@ export class ActionsContainer {
         click: () => void
     }[];
 
-    constructor(game: WorldSimGame) {
-        this.game = game;
-        this.elem = document.createElement('div');
-        this.game.wrapper.appendChild(this.elem);
+    playerName: string;
 
-        this.elem.classList.add('game__actions');
+    constructor(game: WorldSimGame, params?: { info: object }) {
+        super(game, params);
+        this.playerName = 'Player';
+       
+        this.elem.classList.add('ui__row');
+
+        // ---------
+
+        const player = document.createElement('div');
+
+        player.classList.add('panel__player');
+        player.classList.add('ui__block');
+        this.elem.appendChild(player);
+
+        const avatar = document.createElement('div');
+
+        avatar.classList.add('panel__avatar');
+        player.appendChild(avatar);
+
+        const playerNameElem = document.createElement('div');
+
+        playerNameElem.classList.add('panel__text');
+        playerNameElem.innerText = this.playerName;
+        player.appendChild(playerNameElem);
+
+        // ---------
+
+        const actionsElem = document.createElement('div');
+
+        actionsElem.classList.add('panel__actions');
+        //actionsElem.classList.add('ui__block');
+        this.elem.appendChild(actionsElem);
 
         this.actions = [
             { 
@@ -61,17 +87,20 @@ export class ActionsContainer {
                     });
                 }
             }
+            // TODO: copy, other map
         ];
 
         for (const action of this.actions) {
-            const actionElem = document.createElement('img') as HTMLImageElement;
+            const actionElem = document.createElement('button') as HTMLButtonElement;
 
-            actionElem.classList.add('game__action');
-            actionElem.src = action.icon;
+            actionElem.classList.add('ui__button');
+            actionElem.innerHTML = `
+            <img src="${action.icon}"></img>
+            `;
             actionElem.title = action.name;
             actionElem.onclick = action.click;
 
-            this.elem.appendChild(actionElem);
+            actionsElem.appendChild(actionElem);
         }
     }
 

@@ -1,16 +1,12 @@
 import { WorldSimGame } from './game';
+import { UiContainer } from './ui-container';
 
-export class LogContainer {
+export class LogContainer extends UiContainer {
 
-    game: WorldSimGame;
-    elem: HTMLDivElement;
+    constructor(game: WorldSimGame, params?: { info: object }) {
+        super(game, params);
 
-    constructor(game: WorldSimGame) {
-        this.game = game;
-        this.elem = document.createElement('div');
-        this.game.wrapper.appendChild(this.elem);
-
-        this.elem.classList.add('game__log');
+        this.elem.classList.add('panel__log');
     }
 
     update(): void {

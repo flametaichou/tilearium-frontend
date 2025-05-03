@@ -14,20 +14,13 @@ import { IPointData } from 'pixi.js';
 import { dialogService } from '@/service/dialog.service';
 import { Path } from '@/classes/path';
 import { LogEvent } from '@/classes/log-event';
-import { DebugContainer } from './debug-container';
-import { LogContainer } from './log-container';
-import { ActionsContainer } from './actions-container';
 import { TreasureMapContainer } from './treasure-map-container';
 import { TextureRegistry } from './texture-registry';
 import { GameOverContainer } from './game-over-container';
 import { GameOverInfo } from './model/game-over-info';
-
-const cellSize = 32;
-const maxFps = 60;
-const debugMode = false;
-
-// Chunks can be useful to work with smaller arrays (faster)
-const chunkSize = 16;
+import { PanelContainer } from './panel-container';
+import { UiContainer } from './ui-container';
+import { cellSize, chunkSize, debugMode, maxFps } from './constants';
 
 export class WorldSimGame {
     id: string;
@@ -36,10 +29,9 @@ export class WorldSimGame {
     ui: HTMLDivElement;
     uiUpdateIntervalId: number;
 
-    logContainer: LogContainer;
-    info: HTMLDivElement;
-    actions: ActionsContainer;
-    debug: DebugContainer;
+    containers: UiContainer[];
+
+    panel: PanelContainer;
     treasureMapContainer: TreasureMapContainer;
     gameOverContainer: GameOverContainer;
 
@@ -138,9 +130,7 @@ export class WorldSimGame {
         this.wrapper.classList.add('game__wrapper');
         this.wrapper.appendChild(this.canvas);
 
-        this.debug = new DebugContainer(this);
-        this.logContainer = new LogContainer(this);
-        this.actions = new ActionsContainer(this);
+        this.panel = new PanelContainer(this);
 
         /*
         const dialogMessage = document.createElement('div');
@@ -492,8 +482,7 @@ export class WorldSimGame {
         //this.render();
 
         this.uiUpdateIntervalId = setInterval(() => {
-            this.debug.update();
-            this.logContainer.update();
+            this.panel.update();
         }, 300);
 
         // TODO: check bind

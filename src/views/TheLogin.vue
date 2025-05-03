@@ -112,6 +112,7 @@ onMounted(() => {
                 dialogService.toastError('Error on checking user authentication: ' + error);
 
                 if (error.response?.status === 401) {
+                    console.log('Refreshing token...');
                     user.value = null;
                     userManager.signinSilent();
                 }  

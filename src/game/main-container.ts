@@ -6,18 +6,11 @@ import { debugMode } from './constants';
 
 export class MainContainer extends UiContainer {
 
-    timerStart: Date;
-    timer: number;
-    title: string;
-
     timerElem: HTMLElement;
+    titleElem: HTMLElement;
 
     constructor(game: WorldSimGame, params?: { info: object }) {
         super(game, params);
-
-        this.timerStart = new Date();
-        this.timer = 20000;
-        this.title = 'The world';
 
         this.elem.classList.add('panel__main');
 
@@ -34,11 +27,10 @@ export class MainContainer extends UiContainer {
         this.timerElem.classList.add('ui__chip');
         info.appendChild(this.timerElem);
 
-        const titleElem = document.createElement('div');
+        this.titleElem = document.createElement('div');
 
-        titleElem.classList.add('panel__title');
-        titleElem.innerText = this.title;
-        info.appendChild(titleElem);
+        this.titleElem.classList.add('panel__title');
+        info.appendChild(this.titleElem);
 
         /*
         const copyBtn = document.createElement('button');
@@ -74,7 +66,12 @@ export class MainContainer extends UiContainer {
 
     update(): void {
         super.update();
-        this.timerElem.innerText = toTimeString((this.timerStart.getTime() + this.timer) - new Date().getTime());
+
+        if (this.game.startTime && this.game.timer) {
+            this.timerElem.innerText = toTimeString((this.game.startTime.getTime() + this.game.timer) - new Date().getTime());
+        }
+        
+        this.titleElem.innerText = this.game.name;
     }
 }
 

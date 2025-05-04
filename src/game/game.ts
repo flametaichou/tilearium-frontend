@@ -21,6 +21,9 @@ import { GameOverInfo } from './model/game-over-info';
 import { PanelContainer } from './panel-container';
 import { UiContainer } from './ui-container';
 import { cellSize, chunkSize, debugMode, maxFps } from './constants';
+import { QuestsInfo } from './model/quests-info';
+import { QuestsContainer } from './quests-container';
+import { GameInfo } from './model/game-info';
 
 export class WorldSimGame {
     id: string;
@@ -34,6 +37,7 @@ export class WorldSimGame {
     panel: PanelContainer;
     treasureMapContainer: TreasureMapContainer;
     gameOverContainer: GameOverContainer;
+    questsContainer: QuestsContainer;
 
     initializing: boolean;
     loading: boolean;
@@ -91,6 +95,11 @@ export class WorldSimGame {
         cells: Map<string, WorldCell>,
         cellObjects: Map<string, CellObject>
     };
+
+    name: string;
+    playerName: string;
+    startTime: Date;
+    timer: number;
 
     worldWidth: number;
     worldHeight: number;
@@ -418,6 +427,22 @@ export class WorldSimGame {
     
                         this.treasureMapContainer = new TreasureMapContainer(this);
 
+                        break;
+
+                    case 'GAME_INFO':
+                        const gameInfo: GameInfo = notification.body as GameInfo;
+
+                        this.name = gameInfo.name;
+                        this.startTime = new Date(gameInfo.startTime);
+                        this.timer = gameInfo.timer;
+        
+                        break;
+
+                    case 'QUESTS_INFO':
+                        const quests: QuestsInfo = notification.body as QuestsInfo;
+    
+                        this.questsContainer = new QuestsContainer(this, { info: quests });
+    
                         break;
 
                     case 'GAME_OVER':

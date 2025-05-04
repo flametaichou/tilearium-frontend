@@ -47,10 +47,11 @@ export class ActionsContainer extends UiContainer {
 
         this.actions = [
             { 
-                name: 'Exit', 
-                icon: '/actions/exit.png', 
+                name: 'Copy Link', 
+                icon: '/actions/share.png', 
                 click: () => {
-                    game.exit();
+                    navigator.clipboard.writeText(window.location.href);
+                    game.log.push('Link copied');
                 }
             },
             { 
@@ -77,6 +78,18 @@ export class ActionsContainer extends UiContainer {
                 }
             },
             { 
+                name: 'Show Quests', 
+                icon: '/actions/journal.png', 
+                click: () => {
+                    webSocketService.send(this.game.pushPath, {
+                        type: 'ACTION',
+                        body: {
+                            type: 'SHOW_QUESTS'
+                        }
+                    });
+                }
+            },
+            { 
                 name: 'Show Map', 
                 icon: '/actions/map.png', 
                 click: () => {
@@ -86,8 +99,14 @@ export class ActionsContainer extends UiContainer {
                         }
                     });
                 }
+            },
+            { 
+                name: 'Exit', 
+                icon: '/actions/exit.png', 
+                click: () => {
+                    game.exit();
+                }
             }
-            // TODO: copy, other map
         ];
 
         for (const action of this.actions) {

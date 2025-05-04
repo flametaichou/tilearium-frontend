@@ -10,9 +10,7 @@
     </div>
 </template>
 
-
 <style scoped lang="scss">
-
 .about {
     height: 100%;
     display: flex;

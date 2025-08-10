@@ -15,9 +15,9 @@ instance.interceptors.request.use(
 
         if (user) {
             console.log(user);
-            const accessToken = user.id_token;
+            const token = user.id_token;
 
-            req.headers['Authorization'] = `Bearer ${accessToken}`;
+            req.headers['Authorization'] = `Bearer ${token}`;
         }
     
         return req;

@@ -35,10 +35,10 @@ class WebSocketService {
             }
 
             const user: User = store.state.account;
-            const accessToken = user?.id_token;
+            const token = user?.id_token;
 
             const headers = {
-                'Authorization': accessToken ? 'Bearer ' + accessToken : ''
+                'Authorization': token ? 'Bearer ' + token : ''
             };
 
             //StompHeaders connectHeaders = new StompHeaders();

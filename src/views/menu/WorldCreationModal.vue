@@ -49,7 +49,7 @@ export default defineComponent({
         submit(): void {
             this.loading = true;
 
-            gameApi.newGame()
+            gameApi.newGame(this.world)
                 .then((response) => {
                     this.$emit('submit', response.data);
                 })

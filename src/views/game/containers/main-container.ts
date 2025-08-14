@@ -1,8 +1,8 @@
-import { WorldSimGame } from './game';
+import { WorldSimGame } from '../game';
 import { ActionsContainer } from './actions-container';
 import { UiContainer } from './ui-container';
 import { DebugContainer } from './debug-container';
-import { debugMode } from './constants';
+import { debugMode } from '../constants';
 
 export class MainContainer extends UiContainer {
 

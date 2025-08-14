@@ -1,4 +1,4 @@
-import { WorldSimGame } from './game';
+import { WorldSimGame } from '../game';
 
 export abstract class UiContainer {
 

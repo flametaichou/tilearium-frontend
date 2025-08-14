@@ -1,3 +1,4 @@
+import { WorldRequest } from '@/classes/world-request';
 import { http } from '@/http/http';
 import { AxiosResponse } from 'axios';
 
@@ -15,8 +16,8 @@ class GameApi {
         return http.get('game/unfinished');
     }
 
-    newGame(): Promise<AxiosResponse<string>> {
-        return http.post('game');
+    newGame(request: WorldRequest): Promise<AxiosResponse<string>> {
+        return http.post('game', request);
     }
 
 }

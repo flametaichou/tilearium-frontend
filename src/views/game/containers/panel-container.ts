@@ -1,4 +1,4 @@
-import { WorldSimGame } from './game';
+import { WorldSimGame } from '../game';
 import { LogContainer } from './log-container';
 import { UiContainer } from './ui-container';
 import { MainContainer } from './main-container';

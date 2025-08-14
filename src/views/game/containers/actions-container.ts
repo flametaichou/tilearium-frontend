@@ -1,5 +1,5 @@
 import { webSocketService } from '@/service/websocket.service';
-import { WorldSimGame } from './game';
+import { WorldSimGame } from '../game';
 import { UiContainer } from './ui-container';
 
 export class ActionsContainer extends UiContainer {

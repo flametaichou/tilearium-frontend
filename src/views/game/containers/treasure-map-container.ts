@@ -1,5 +1,5 @@
 import { Container } from 'pixi.js';
-import { WorldSimGame } from './game';
+import { WorldSimGame } from '../game';
 import * as PIXI from 'pixi.js';
 import { Point2D } from '@/classes/point2d';
 import { WorldCell } from '@/classes/world-cell';

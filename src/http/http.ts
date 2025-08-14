@@ -4,6 +4,7 @@ import router from '@/router';
 import { User } from 'oidc-client-ts';
 import { dialogService } from '@/service/dialog.service';
 import { getErrorMessage } from '@/utils/error-utils';
+import { auth } from '@/service/auth.service';
 
 const instance = axios.create({
     baseURL: process.env.VUE_APP_API_URL
@@ -11,10 +12,9 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
     (req) => {
-        const user: User = store.state.account;
+        const user = auth.getAccount();
 
         if (user) {
-            console.log(user);
             const token = user.id_token;
 
             req.headers['Authorization'] = `Bearer ${token}`;
@@ -44,9 +44,10 @@ instance.interceptors.response.use(
             switch (code) {
                 case 401:
                     dialogService.toastError('Unauthorized error: ' + getErrorMessage(error));
-                    store.dispatch('authorize', undefined);
-                    router.push('/');
+                    //store.dispatch('authorize', undefined);
+                    //router.push('/');
                     break;
+
                 case 403:
                     dialogService.toastError('You do not have permission to do this');
                     break;

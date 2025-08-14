@@ -71,6 +71,7 @@ export default defineComponent({
         padding: 16px 8px;
         margin-bottom: 8px;
         border-radius: 4px;
+        z-index: 2;
     
         &--info {
             background-color: var(--white);

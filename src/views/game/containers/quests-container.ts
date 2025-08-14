@@ -1,6 +1,6 @@
-import { WorldSimGame } from './game';
+import { WorldSimGame } from '../game';
 import { ModalContainer } from './modal-container';
-import { QuestsInfo } from './model/quests-info';
+import { QuestsInfo } from '../model/quests-info';
 
 export class QuestsContainer extends ModalContainer {
 

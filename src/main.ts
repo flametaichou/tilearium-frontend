@@ -4,7 +4,7 @@ import router from './router';
 import store from './store';
 import '@/assets/css/ui-kit.css';
 import { UserManagerSettings, UserManager } from 'oidc-client-ts';
-import '@/game/game.scss';
+import '@/views/game/game.scss';
 
 const settings: UserManagerSettings = {
     authority: process.env.VUE_APP_AUTH_SERVER_URL,

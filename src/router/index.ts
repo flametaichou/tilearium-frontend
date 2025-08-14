@@ -1,11 +1,9 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import Home from '../views/TheHome.vue';
-import Game from '../views/TheGame.vue';
+import Game from '../views/game/TheGame.vue';
 import Main from '../views/TheMain.vue';
 import { useStore } from 'vuex';
-import TheLogin from '@/views/TheLogin.vue';
-import TheCallback from '@/views/TheCallback.vue';
-import TheCallbackError from '@/views/TheCallbackError.vue';
+import { auth } from '@/service/auth.service';
+import { dialogService } from '@/service/dialog.service';
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -14,49 +12,12 @@ const routes: Array<RouteRecordRaw> = [
         component: Main,
         meta: {
             authorize: false
-        },
-        children: [
-            {
-                path: '/worlds',
-                name: 'Worlds',
-                component: Home
-            },
-            {
-                path: '/',
-                name: 'About',
-                // route level code-splitting
-                // this generates a separate chunk (about.[hash].js) for this route
-                // which is lazy-loaded when the route is visited.
-                component: () => import(/* webpackChunkName: "about" */ '../views/TheAbout.vue')
-            },
-            {
-                path: '/auth',
-                name: 'AuthCallback',
-                component: TheCallback,
-                meta: {
-                    authorize: false
-                }
-            },
-            {
-                path: '/auth-error',
-                name: 'AuthCallbackError',
-                component: TheCallbackError,
-                meta: {
-                    authorize: false
-                }
-            }
-        ]
-    },
-    /*
-    {
-        path: '/login',
-        name: 'Login',
-        component: TheLogin,
-        meta: {
-            authorize: false
         }
     },
-    */
+    {
+        path: '/auth',
+        redirect: '/'
+    },
     {
         path: '/game/:gameId',
         name: 'Game',
@@ -75,11 +36,12 @@ const router = createRouter({
 //router.beforeEach(vuexOidcCreateRouterMiddleware(store, 'oidcStore'));
 router.beforeEach((to, from, next) => {
     const { authorize } = to.meta;
-    const store = useStore();
-    const currentUser = store.state.account;
+    const currentUser = auth.getAccount();
 
     if (authorize) {
         if (!currentUser) {
+            dialogService.toastError('You are not authorized');
+            
             return next({ path: '/login' });
         }
     }

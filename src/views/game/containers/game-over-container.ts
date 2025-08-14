@@ -1,5 +1,5 @@
-import { WorldSimGame } from './game';
-import { GameOverInfo } from './model/game-over-info';
+import { WorldSimGame } from '../game';
+import { GameOverInfo } from '../model/game-over-info';
 import { ModalContainer } from './modal-container';
 
 export class GameOverContainer extends ModalContainer {

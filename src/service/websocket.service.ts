@@ -3,6 +3,7 @@ import store from '@/store';
 import Stomp, { Client } from 'webstomp-client';
 import { User } from 'oidc-client-ts';
 import { dialogService } from './dialog.service';
+import { auth } from './auth.service';
 
 const debugMode = false;
 const reconnectDelay = 10000;
@@ -34,7 +35,7 @@ class WebSocketService {
                 this.stompClient.debug = () => {};
             }
 
-            const user: User = store.state.account;
+            const user = auth.getAccount();
             const token = user?.id_token;
 
             const headers = {

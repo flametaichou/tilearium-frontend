@@ -1,4 +1,4 @@
-import { WorldSimGame } from './game';
+import { WorldSimGame } from '../game';
 import { UiContainer } from './ui-container';
 
 export class DebugContainer extends UiContainer {

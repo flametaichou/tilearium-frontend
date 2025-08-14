@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { WorldSimGame } from '@/game/game';
+import { WorldSimGame } from '@/views/game/game';
 
 // Don't make it reactive, it will impact performance a lot
 let game: WorldSimGame = null;

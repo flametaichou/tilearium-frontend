@@ -14,15 +14,15 @@ import { IPointData } from 'pixi.js';
 import { dialogService } from '@/service/dialog.service';
 import { Path } from '@/classes/path';
 import { LogEvent } from '@/classes/log-event';
-import { TreasureMapContainer } from './treasure-map-container';
+import { TreasureMapContainer } from './containers/treasure-map-container';
 import { TextureRegistry } from './texture-registry';
-import { GameOverContainer } from './game-over-container';
+import { GameOverContainer } from './containers/game-over-container';
 import { GameOverInfo } from './model/game-over-info';
-import { PanelContainer } from './panel-container';
-import { UiContainer } from './ui-container';
+import { PanelContainer } from './containers/panel-container';
+import { UiContainer } from './containers/ui-container';
 import { cellSize, chunkSize, debugMode, maxFps } from './constants';
 import { QuestsInfo } from './model/quests-info';
-import { QuestsContainer } from './quests-container';
+import { QuestsContainer } from './containers/quests-container';
 import { GameInfo } from './model/game-info';
 
 export class WorldSimGame {
@@ -287,6 +287,9 @@ export class WorldSimGame {
         await this.textureRegistry.init();
 
         this.clearPixi();
+
+        // TODO: create an instance of websocket client for the game
+        await webSocketService.init();
 
         // TODO: change path
         webSocketService.subscribe(this.pullPath,

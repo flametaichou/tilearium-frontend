@@ -1,17 +1,23 @@
-import { User, UserManager, UserManagerSettings, WebStorageStateStore } from 'oidc-client-ts';
+import { User, UserManager, UserManagerSettings } from 'oidc-client-ts';
 import { dialogService } from './dialog.service';
+import getEnv from '@/utils/env';
 
+// Do not fill the VUE_APP_AUTH_CLIENT_SECRET
+// It was added only for testing with Google
+// Google doesn't work without it, see:
+// - https://github.com/authts/oidc-client-ts/issues/152
+// - https://github.com/authts/oidc-client-ts/issues/571
 const settings: UserManagerSettings = {
-    authority: process.env.VUE_APP_AUTH_SERVER_URL,
-    client_id: process.env.VUE_APP_AUTH_CLIENT_ID,
-    client_secret: process.env.VUE_APP_AUTH_CLIENT_SECRET,
+    authority: getEnv('VUE_APP_AUTH_SERVER_URL'),
+    client_id: getEnv('VUE_APP_AUTH_CLIENT_ID'),
+    client_secret: getEnv('VUE_APP_AUTH_CLIENT_SECRET'),
     redirect_uri: window.location.origin + '/auth',
     //popup_redirect_uri: window.location.origin + '/auth',
     //silent_redirect_uri: window.location.origin + '/silent-renew',
     post_logout_redirect_uri: window.location.origin + '/auth',
     response_type: 'code',
     scope: 'openid profile email',
-    accessTokenExpiringNotificationTimeInSeconds: Number.parseInt(process.env.VUE_APP_AUTH_RENEW_TIME) || 30,
+    accessTokenExpiringNotificationTimeInSeconds: Number.parseInt(getEnv('VUE_APP_AUTH_RENEW_TIME')) || 30,
     silentRequestTimeoutInSeconds: 10000,
     automaticSilentRenew: true,
     monitorSession: true

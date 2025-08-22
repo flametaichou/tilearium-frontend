@@ -1,13 +1,11 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import store from '@/store';
-import router from '@/router';
-import { User } from 'oidc-client-ts';
 import { dialogService } from '@/service/dialog.service';
 import { getErrorMessage } from '@/utils/error-utils';
 import { auth } from '@/service/auth.service';
+import getEnv from '@/utils/env';
 
 const instance = axios.create({
-    baseURL: process.env.VUE_APP_API_URL
+    baseURL: getEnv('VUE_APP_API_URL')
 });
 
 instance.interceptors.request.use(

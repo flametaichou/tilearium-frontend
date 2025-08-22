@@ -1,9 +1,8 @@
 import SockJS from 'sockjs-client';
-import store from '@/store';
 import Stomp, { Client } from 'webstomp-client';
-import { User } from 'oidc-client-ts';
 import { dialogService } from './dialog.service';
 import { auth } from './auth.service';
+import getEnv from '@/utils/env';
 
 const debugMode = false;
 const reconnectDelay = 10000;
@@ -17,7 +16,7 @@ class WebSocketService {
 
     init(): Promise<void> {
         return new Promise((resolve, reject) => {
-            const wsAddress: string = process.env.VUE_APP_API_URL.replace('/api', '') + 'ws';
+            const wsAddress: string = getEnv('VUE_APP_API_URL').replace('/api', '') + 'ws';
 
             console.log(wsAddress);
             const socket: typeof SockJS = new SockJS(wsAddress);

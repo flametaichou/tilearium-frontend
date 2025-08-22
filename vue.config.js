@@ -60,7 +60,7 @@ module.exports = {
         config.optimization.runtimeChunk('single');
         config.optimization.chunkIds = 'named'; //config.optimization.namedChunks(true);
         config.optimization.moduleIds = 'named'; //config.optimization.namedModules(true);
-    //config.optimization.delete('splitChunks');
+        //config.optimization.delete('splitChunks');
     },
 
     configureWebpack: {

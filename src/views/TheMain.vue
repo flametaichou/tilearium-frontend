@@ -117,6 +117,7 @@ import { AxiosError } from 'axios';
 import lockSvg from '@/assets/img/auth.svg';
 import emptySvg from  '@/assets/img/empty.svg';
 import { auth } from '@/service/auth.service';
+import getEnv from '@/utils/env';
 
 const router = useRouter();
 const store = useStore();
@@ -171,11 +172,11 @@ const logInButtonProps: ComputedRef<{
     }
 }> = computed(() => { 
     return {
-        name: process.env.VUE_APP_AUTH_NAME,
-        icon: process.env.VUE_APP_AUTH_ICON || lockSvg,
+        name: getEnv('VUE_APP_AUTH_NAME'),
+        icon: getEnv('VUE_APP_AUTH_ICON') || lockSvg,
         style: {
-            backgroundColor: process.env.VUE_APP_AUTH_COLOR || 'var(--secondary)',
-            color: process.env.VUE_APP_AUTH_TEXT_COLOR || 'var(--white)'
+            backgroundColor: getEnv('VUE_APP_AUTH_COLOR') || 'var(--secondary)',
+            color: getEnv('VUE_APP_AUTH_TEXT_COLOR') || 'var(--white)'
         }
     };
 });

@@ -1,10 +1,10 @@
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import { ModalContainer } from './modal-container';
 import { QuestsInfo } from '../model/quests-info';
 
 export class QuestsContainer extends ModalContainer {
 
-    constructor(game: WorldSimGame, params: { info: QuestsInfo }) {
+    constructor(game: TileariumGame, params: { info: QuestsInfo }) {
         super(game, params);
 
         this.header.innerHTML = '<h2>Welcome to the game</h2>';

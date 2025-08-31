@@ -8,7 +8,6 @@
 
         <div class="main__content">
 
-
             <!--
             <div class="left">
             </div>
@@ -22,7 +21,7 @@
                 </div>
 
                 <div class="header__description">
-                    <strong>WorldSim</strong> - is a game where you need to find something in a simulated world
+                    <strong>Tilearium</strong> - is a game where you need to find something in a tiled world
                 </div>
             </div>
 
@@ -68,9 +67,7 @@
 
             <div  class="card card--shadow menu">
 
-
                 <div class="card__content menu__buttons">
-
 
                     <div>
                         <button class="secondary large block" :disabled="!user" @click="play()">
@@ -129,10 +126,10 @@ const onUserChanged = (e: CustomEvent<{ user: User }>) => {
     user.value = e.detail.user;
 };
 
-document.addEventListener('worldsim:user', onUserChanged);
+document.addEventListener('tilearium:user', onUserChanged);
 
 onBeforeUnmount(async () => {
-    document.removeEventListener('worldsim:user', onUserChanged);
+    document.removeEventListener('tilearium:user', onUserChanged);
 });
 
 onMounted(() => {
@@ -289,9 +286,7 @@ function joinGame(gameId: string): void {
     opacity: 0.4;
 }
 
-
 /*
-
 
         .left {
             z-index: 0;

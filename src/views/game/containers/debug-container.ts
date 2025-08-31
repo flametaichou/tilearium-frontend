@@ -1,4 +1,4 @@
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import { UiContainer } from './ui-container';
 
 export class DebugContainer extends UiContainer {
@@ -6,7 +6,7 @@ export class DebugContainer extends UiContainer {
     fpsElem: HTMLDivElement;
     centerElem: HTMLDivElement;
 
-    constructor(game: WorldSimGame, params?: { info: object }) {
+    constructor(game: TileariumGame, params?: { info: object }) {
         super(game, params);
 
         this.elem.classList.add('game__debug');

@@ -1,12 +1,14 @@
 {
-  "name": "worldsim-front-ts",
+  "name": "tilearium-frontend-ts",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "build:production": "vue-cli-service build --mode production",
     "test:unit": "vue-cli-service test:unit",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint --no-fix",
+    "lint:fix": "vue-cli-service lint"
   },
   "dependencies": {
     "@pixi/tilemap": "^4.1.0",

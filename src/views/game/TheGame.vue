@@ -6,10 +6,10 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { WorldSimGame } from '@/views/game/game';
+import { TileariumGame } from '@/views/game/game';
 
 // Don't make it reactive, it will impact performance a lot
-let game: WorldSimGame = null;
+let game: TileariumGame = null;
 
 export default defineComponent({
     name: 'TheHome',
@@ -35,13 +35,19 @@ export default defineComponent({
     },
 
     async mounted() {
-        game = new WorldSimGame(document.getElementById('game-' + this.gameId) as HTMLDivElement, this.gameId);
+        game = new TileariumGame(document.getElementById('game-' + this.gameId) as HTMLDivElement, this.gameId);
         game.init();
     },
 
     beforeUnmount(): void {
         game.stop();
     },
+
+    /*
+    beforeRouteLeave(): void {
+        game.stop();
+    },
+    */
 
     methods: {
     }

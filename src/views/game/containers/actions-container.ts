@@ -1,5 +1,5 @@
 import { webSocketService } from '@/service/websocket.service';
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import { UiContainer } from './ui-container';
 
 export class ActionsContainer extends UiContainer {
@@ -12,7 +12,7 @@ export class ActionsContainer extends UiContainer {
 
     playerName: string;
 
-    constructor(game: WorldSimGame, params?: { info: object }) {
+    constructor(game: TileariumGame, params?: { info: object }) {
         super(game, params);
         this.playerName = 'Player';
        

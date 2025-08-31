@@ -157,7 +157,7 @@ module.exports = {
     'eol-last': 0,
     'no-plusplus': 0,
     'linebreak-style': 0,
-    'no-multi-spaces': 0, // Не дает выравнивать код и комментарии
+    'no-multi-spaces': 0,
     'lines-between-class-members': 0,
     'import/prefer-default-export': 0,
     'class-methods-use-this': 0,
@@ -229,4 +229,4 @@ module.exports = {
   ignorePatterns: [
     'node_modules/'
   ]
-}
+};

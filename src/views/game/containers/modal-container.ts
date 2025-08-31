@@ -1,4 +1,4 @@
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import { UiContainer } from './ui-container';
 
 export abstract class ModalContainer extends UiContainer {
@@ -7,7 +7,7 @@ export abstract class ModalContainer extends UiContainer {
     content: HTMLDivElement;
     actions: HTMLDivElement;
 
-    constructor(game: WorldSimGame, params?: { info: object }) {
+    constructor(game: TileariumGame, params?: { info: object }) {
         super(game, params);
 
         this.elem.classList.add('dialog');

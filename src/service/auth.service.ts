@@ -119,7 +119,7 @@ class AuthService {
         }
         */
 
-        const event = new CustomEvent<object>('worldsim:user', {
+        const event = new CustomEvent<object>('tilearium:user', {
             detail : {
                 user: this.user
             }

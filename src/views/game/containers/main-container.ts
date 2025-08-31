@@ -1,4 +1,4 @@
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import { ActionsContainer } from './actions-container';
 import { UiContainer } from './ui-container';
 import { DebugContainer } from './debug-container';
@@ -9,7 +9,7 @@ export class MainContainer extends UiContainer {
     timerElem: HTMLElement;
     titleElem: HTMLElement;
 
-    constructor(game: WorldSimGame, params?: { info: object }) {
+    constructor(game: TileariumGame, params?: { info: object }) {
         super(game, params);
 
         this.elem.classList.add('panel__main');

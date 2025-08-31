@@ -1,9 +1,9 @@
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import { UiContainer } from './ui-container';
 
 export class LogContainer extends UiContainer {
 
-    constructor(game: WorldSimGame, params?: { info: object }) {
+    constructor(game: TileariumGame, params?: { info: object }) {
         super(game, params);
 
         this.elem.classList.add('panel__log');

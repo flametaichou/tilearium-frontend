@@ -11,16 +11,15 @@ module.exports = {
         if (isProductionBuild) {
             console.log('Building for production');
 
-            // Настройки terser
             config.optimization.minimizer('terser').tap((args) => {
                 args[0].terserOptions.output = {
                     ...args[0].terserOptions.output,
-                    comments: false,  // чистка комментариев в коде
+                    comments: true,
                     beautify: false
                 };
                 args[0].terserOptions.compress = {
                     ...args[0].terserOptions.compress
-                    // dropConsole: false  // чистка console*
+                    // dropConsole: false
                 };
 
                 return args;
@@ -39,10 +38,10 @@ module.exports = {
                 commons: {
                     chunks: 'initial',
                     minChunks: 2,
-                    maxInitialRequests: 5, // The default limit is too small to showcase the effect
-                    minSize: 0 // This is example is too small to create commons chunks
+                    maxInitialRequests: 5,
+                    minSize: 0 
                 },
-                // Вынесение node_modules в отдельный чанк
+                // Separated node_modules chunk
                 vendor: {
                     test: /[\\/]node_modules[\\/]/,
                     chunks: 'initial',

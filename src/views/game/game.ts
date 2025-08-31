@@ -25,7 +25,7 @@ import { QuestsInfo } from './model/quests-info';
 import { QuestsContainer } from './containers/quests-container';
 import { GameInfo } from './model/game-info';
 
-export class WorldSimGame {
+export class TileariumGame {
     id: string;
     wrapper: HTMLDivElement;
     canvas: HTMLCanvasElement;
@@ -778,7 +778,7 @@ export class WorldSimGame {
             cellsMap.set(this.getKey(point), cell);
         }
 
-        //console.log('Преобразование: ' + (new Date().getTime() - time.getTime()) + 'мс');
+        //console.log('Processing: ' + (new Date().getTime() - time.getTime()) + 'мс');
 
         return cellsMap;
     }
@@ -795,7 +795,7 @@ export class WorldSimGame {
             cellsMap.set(this.getKey(point), cell);
         }
 
-        //console.log('Преобразование 2: ' + (new Date().getTime() - time.getTime()) + 'мс');
+        //console.log('Processing 2: ' + (new Date().getTime() - time.getTime()) + 'мс');
 
         return cellsMap;
     }
@@ -897,12 +897,10 @@ export class WorldSimGame {
     }
 
     centerPixi() {
-        // TODO: тут центрирование, разобраться
         // Move container to the center
         //this.container.x = this.app.screen.width / 2;
         //this.container.y = this.app.screen.height / 2;
 
-        // Center bunny sprite in local container coordinates
         this.container.pivot.x = this.center.x * cellSize;
         this.container.pivot.y = this.center.y * cellSize;
     }

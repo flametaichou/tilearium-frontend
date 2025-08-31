@@ -1,12 +1,12 @@
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 
 export abstract class UiContainer {
 
-    game: WorldSimGame;
+    game: TileariumGame;
     elem: HTMLDivElement;
     containers: UiContainer[];
 
-    constructor(game: WorldSimGame, params?: { info: object }) {
+    constructor(game: TileariumGame, params?: { info: object }) {
         this.containers = [];
         this.game = game;
         this.elem = document.createElement('div');

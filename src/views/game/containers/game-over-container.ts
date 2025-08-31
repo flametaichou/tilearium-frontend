@@ -1,10 +1,10 @@
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import { GameOverInfo } from '../model/game-over-info';
 import { ModalContainer } from './modal-container';
 
 export class GameOverContainer extends ModalContainer {
 
-    constructor(game: WorldSimGame, params: { info: GameOverInfo }) {
+    constructor(game: TileariumGame, params: { info: GameOverInfo }) {
         super(game, params);
 
         this.header.innerHTML = '<h2>The game is ended!</h2>';

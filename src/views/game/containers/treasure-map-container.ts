@@ -1,5 +1,5 @@
 import { Container } from 'pixi.js';
-import { WorldSimGame } from '../game';
+import { TileariumGame } from '../game';
 import * as PIXI from 'pixi.js';
 import { Point2D } from '@/classes/point2d';
 import { WorldCell } from '@/classes/world-cell';
@@ -10,7 +10,7 @@ const cellSize = 32;
 
 export class TreasureMapContainer extends ModalContainer {
 
-    constructor(game: WorldSimGame, params?: { info: object }) {
+    constructor(game: TileariumGame, params?: { info: object }) {
         super(game, params);
 
         this.header.innerHTML = '<h2>Treasure map</h2>';

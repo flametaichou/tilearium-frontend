@@ -26,7 +26,7 @@ export class World implements World {
         this.cells.push(...cells);
         this.sort();
 
-        // Удаляю все клетки, каких нет в новом view
+        // Remove cells not found in the new view
         /*
         this.world.cells = this.world.cells.filter((cell: WorldCell) => {
             return newWorld.cells.find((newCell) => {

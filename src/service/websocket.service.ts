@@ -15,7 +15,7 @@ class WebSocketService {
     sessionId: string = null;
 
     init(): Promise<void> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const wsAddress: string = getEnv('VUE_APP_API_URL').replace('/api', '') + 'ws';
 
             console.log(wsAddress);
@@ -82,7 +82,7 @@ class WebSocketService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subscribe(path: string, callbackFunction: (arg: any) => void, weak: boolean) {
+    subscribe(path: string, callbackFunction: (arg: any) => void) {
         path = path.replace(':sessionId', this.sessionId);
         
         this.stompClient.subscribe(path, (val) => {

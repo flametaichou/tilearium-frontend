@@ -101,10 +101,9 @@
 </template>
 
 <script lang="ts" setup>
-import { User, UserManager } from 'oidc-client-ts';
-import { computed, ComputedRef, inject, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { User } from 'oidc-client-ts';
+import { computed, ComputedRef, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Store, useStore } from 'vuex';
 import WorldCreationModal from '@/views/menu/WorldCreationModal.vue';
 import EnterCodeModal from '@/views/menu/EnterCodeModal.vue';
 import { authApi } from '@/api/auth.api';
@@ -117,7 +116,6 @@ import { auth } from '@/service/auth.service';
 import getEnv from '@/utils/env';
 
 const router = useRouter();
-const store = useStore();
 
 const loading = ref(false);
 const user = ref(auth.getAccount());

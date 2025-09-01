@@ -458,8 +458,7 @@ export class TileariumGame {
                     default:
                         dialogService.toastError('UNKNOWN NOTIFICATION: ' + notification.type);
                 }
-            },
-            false
+            }
         );
 
         try {
@@ -487,7 +486,7 @@ export class TileariumGame {
         this.app.ticker.minFPS = 0;
 
         this.fps = 0;
-        this.app.ticker.add((delta) => {
+        this.app.ticker.add(() => {
             const newFps = Math.round(this.app.ticker.FPS);
 
             if (this.fps < newFps) {
@@ -499,7 +498,7 @@ export class TileariumGame {
 
         }, {}, -100);
 
-        this.app.ticker.add((delta) => {
+        this.app.ticker.add(() => {
             this.drawAll();
             this.redrawAll();
             this.clearAll();
@@ -1377,7 +1376,7 @@ export class TileariumGame {
         */
 
         for (const key of this.view.effects.keys()) {
-            const p: Point2D = this.parseKey(key);
+            //const p: Point2D = this.parseKey(key);
 
             if (!this.viewData.effects.get(key)) {
                 const sprite: PIXI.Sprite = this.view.effects.get(key) as PIXI.Sprite;  // FIXME: why as?

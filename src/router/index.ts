@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import Game from '../views/game/TheGame.vue';
 import Main from '../views/TheMain.vue';
-import { useStore } from 'vuex';
 import { auth } from '@/service/auth.service';
 import { dialogService } from '@/service/dialog.service';
 

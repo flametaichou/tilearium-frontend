@@ -157,7 +157,7 @@ class AuthService {
     processCallback(): Promise<void> {
         const urlSearchParams = new URLSearchParams(window.location.search);
         const isCallback = urlSearchParams.has('state');
-        const isCallbackError = urlSearchParams.has('error');
+        //const isCallbackError = urlSearchParams.has('error');
 
         if (isCallback) {
             return this.userManager.signinRedirectCallback()

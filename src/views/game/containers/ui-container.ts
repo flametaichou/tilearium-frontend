@@ -5,10 +5,14 @@ export abstract class UiContainer {
     game: TileariumGame;
     elem: HTMLDivElement;
     containers: UiContainer[];
+    params?: { 
+        info: object 
+    };
 
     constructor(game: TileariumGame, params?: { info: object }) {
         this.containers = [];
         this.game = game;
+        this.params = params;
         this.elem = document.createElement('div');
         this.game.wrapper.appendChild(this.elem);
     }
